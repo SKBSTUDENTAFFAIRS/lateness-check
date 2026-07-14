@@ -1,6 +1,6 @@
 <p class="text-xs text-slate-400 mt-1" id="mgr-modal-student-desc">ข้อมูลการเข้าเรียนสายสะสม</p>
                     </div>
-                    <button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors duration-200 hover:rotate-90 transform">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
@@ -16,7 +16,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tbl-mgr-logs-body" class="divide-y divide-slate-100">
-                                <!-- แถวประวัติรายคนจะถูกวาดตรงนี้ -->
+                                <!-- รายการจะแสดงอย่างนุ่มนวลตรงนี้ -->
                             </tbody>
                         </table>
                     </div>
@@ -25,36 +25,111 @@
         </div>
     </div>
 
+    <!-- 🌟 STYLESHEET สำหรับสร้างความพรีเมียม (PREMIUM ANIMATION ENGINE) -->
+    <style>
+        /* เอฟเฟกต์การสไลด์และจางหายอย่างนุ่มนวลสไตล์ iOS/macOS */
+        @keyframes premiumSlideUp {
+            0% { opacity: 0; transform: translateY(16px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes microShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 4px rgba(16, 185, 129, 0.1); }
+            50% { box-shadow: 0 0 16px rgba(16, 185, 129, 0.4); }
+        }
+
+        .animate-premium-entry {
+            animation: premiumSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        
+        /* เพิ่มเอฟเฟกต์ Glassmorphism แบบมีคลาส */
+        .premium-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.06);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        /* ปุ่มสัมผัสแล้วตอบสนองอย่างเป็นธรรมชาติ */
+        .premium-btn {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .premium-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* โหลดสถานะสวยงามหรูหรา */
+        .shimmer-loading {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: microShimmer 1.5s infinite linear;
+        }
+
+        .active-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar ให้ดูสะอาดตาไม่รบกวนสายตา */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+
     <!-- SYSTEM CORE LOGIC JAVASCRIPT -->
     <script>
-        // 📥 นำ URL เว็บแอปที่ได้จากการ Deploy ในขั้นตอนที่แล้วมาวางที่นี่
+        // 📥 วางลิงก์ Web App URL ของคุณที่นี่ (เมื่อ Deploy เสร็จสิ้น)
         const API_URL = "วาง_URL_เว็บแอป_YOUR_WEB_APP_URL_HERE"; 
 
-        // ตัวแปรเก็บสถานะข้อมูลภายในระบบ (State)
+        // State Management ของระบบ
         let studentsDataset = [];
         let logsDataset = [];
         let selectedStudent = null;
         let currentEditingStudentId = null;
 
-        // ฟังก์ชันเริ่มทำงานเมื่อโหลดหน้าเว็บเสร็จสิ้น
         window.onload = function() {
-            // ตั้งค่าวันที่เริ่มต้นให้กับระบบเป็นวันปัจจุบัน
+            // ตั้งค่าเวลาปัจจุบันเริ่มต้น
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('record-date-picker').value = today;
             document.getElementById('dash-date-week-picker').value = getMondayOfCurrentWeek(new Date());
 
-            // ตรวจสอบ Session การเข้าสู่ระบบเดิม
+            // เช็คการเข้าสู่ระบบเดิม
             if (localStorage.getItem('skb_admin_session') === 'active') {
                 showPortalMainInterface();
             }
         };
 
-        // ฟังก์ชันคำนวณหาวันจันทร์ของสัปดาห์ปัจจุบัน
+        // ฟังก์ชันช่วยจัดรูปแบบวันที่ให้ตรงกัน (ป้องกันปัญหา Date format mismatch)
+        function normalizeDate(dateInput) {
+            if (!dateInput) return "";
+            let d = new Date(dateInput);
+            if (isNaN(d.getTime())) return String(dateInput).trim(); // ตัวเลือกสำรองกรณีอ่านขัดข้อง
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
         function getMondayOfCurrentWeek(d) {
             const date = new Date(d);
             const day = date.getDay();
             const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(date.setDate(diff)).toISOString().split('T')[0];
+            return normalizeDate(new Date(date.setDate(diff)));
         }
 
         // ==========================================
@@ -74,10 +149,10 @@
 
             if (user === "SKBadmin" && pass.length === 5 && !isNaN(pass)) {
                 localStorage.setItem('skb_admin_session', 'active');
-                showToast("เข้าสู่ระบบสำเร็จ", "ยินดีต้อนรับผู้ดูแลระบบฝ่ายปกครอง", "success");
+                showToast("🔐 เข้าสู่ระบบสำเร็จ", "ระบบกำลังนำทางท่านเข้าสู่แดชบอร์ดความปลอดภัยสูง", "success");
                 showPortalMainInterface();
             } else {
-                showToast("ข้อมูลไม่ถูกต้อง", "กรุณาระบุ Username และ Password 5 หลักให้ถูกต้อง", "error");
+                showToast("❌ ข้อมูลไม่ถูกต้อง", "กรุณาระบุรหัสผ่านฝ่ายปกครอง 5 หลักใหม่อีกครั้ง", "error");
             }
         }
 
@@ -85,15 +160,18 @@
             localStorage.removeItem('skb_admin_session');
             document.getElementById('portal-main-view').classList.add('hidden');
             document.getElementById('sec-login-gate').classList.remove('hidden');
-            showToast("ออกจากระบบแล้ว", "เซสชันของคุณถูกทำลายอย่างปลอดภัย", "info");
+            showToast("👋 ออกจากระบบแล้ว", "ออกจากเซสชันระบบจัดการอย่างปลอดภัย", "info");
         }
 
         function showPortalMainInterface() {
+            const mainView = document.getElementById('portal-main-view');
             document.getElementById('sec-login-gate').classList.add('hidden');
-            document.getElementById('portal-main-view').classList.remove('hidden');
+            mainView.classList.remove('hidden');
+            mainView.classList.add('animate-premium-entry'); // เอฟเฟกต์ค่อยๆ ลอยขึ้นมาพรีเมียมมาก
             fetchCoreDatabase();
         }
 
+        // ฟังก์ชันสลับหน้าเพจแบบนิ่มนวลที่สุด (Smooth Tab Switching)
         function switchPortalTab(tabName) {
             const recordTab = document.getElementById('sec-tab-record');
             const dashTab = document.getElementById('sec-tab-dashboard');
@@ -101,15 +179,21 @@
             const btnDash = document.getElementById('tab-btn-dashboard');
 
             if (tabName === 'record') {
-                recordTab.classList.remove('hidden'); recordTab.classList.add('block');
-                dashTab.classList.remove('block'); dashTab.classList.add('hidden');
-                btnRecord.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white";
-                btnDash.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
+                recordTab.classList.remove('hidden');
+                recordTab.classList.add('block', 'animate-premium-entry');
+                dashTab.classList.remove('block');
+                dashTab.classList.add('hidden');
+                
+                btnRecord.className = "premium-btn px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center space-x-2 bg-emerald-600 text-white shadow-lg active-glow shadow-emerald-500/20";
+                btnDash.className = "premium-btn px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center space-x-2 text-slate-400 hover:text-white";
             } else {
-                dashTab.classList.remove('hidden'); dashTab.classList.add('block');
-                recordTab.classList.remove('block'); recordTab.classList.add('hidden');
-                btnDash.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white";
-                btnRecord.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
+                dashTab.classList.remove('hidden');
+                dashTab.classList.add('block', 'animate-premium-entry');
+                recordTab.classList.remove('block');
+                recordTab.classList.add('hidden');
+
+                btnDash.className = "premium-btn px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center space-x-2 bg-emerald-600 text-white shadow-lg active-glow shadow-emerald-500/20";
+                btnRecord.className = "premium-btn px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center space-x-2 text-slate-400 hover:text-white";
                 loadDashboardCoreData();
             }
         }
@@ -118,41 +202,54 @@
         // 🔄 SECTION: CORE SYNC DATABASE (GET API)
         // ==========================================
         async function fetchCoreDatabase() {
+            const indicator = document.getElementById('conn-indicator');
+            const text = document.getElementById('conn-text');
+            
+            // ตรวจสอบว่าแอปเชื่อมกับ Cloud หรือ Demo Mode
             if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
-                showToast("แจ้งเตือนโหมดจําลอง", "ยังไม่ได้ติดตั้ง Web App URL ระบบจะรันระบบจำลองบนเครื่องของคุณ", "info");
+                showToast("🛠️ โหมดจำลองในตัว", "กำลังแสดงข้อมูลจำลองเพื่อความคล่องตัวของการพรีวิวงานออกแบบ", "info");
                 setupMockDatabase();
                 return;
             }
 
-            const indicator = document.getElementById('conn-indicator');
-            const text = document.getElementById('conn-text');
-            indicator.className = "w-2.5 h-2.5 rounded-full animate-pulse bg-amber-500";
-            text.innerText = "กำลังเชื่อมต่อกับเซิร์ฟเวอร์ Google Cloud Sheet...";
+            indicator.className = "w-2.5 h-2.5 rounded-full shimmer-loading";
+            text.innerText = "กำลังเชื่อมสัญญาณแบบเข้ารหัสกับฐานข้อมูล Google Sheets...";
 
             try {
-                // ยิงดึงข้อมูลนักเรียน
+                // ดึงรายชื่อนักเรียนทั้งหมด
                 const resStudents = await fetch(`${API_URL}?action=getStudents`);
                 studentsDataset = await resStudents.json();
 
-                // ยิงดึงข้อมูลล็อกประวัติการมาสาย
+                // ดึงสถิติสาย
                 const resLogs = await fetch(`${API_URL}?action=getLogs`);
                 logsDataset = await resLogs.json();
 
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-                text.innerText = "เชื่อมต่อระบบคลาวด์ Google Sheet สำเร็จแบบ Real-time";
+                // ตกแต่ง UI สถานะเชื่อมต่อ
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 active-glow";
+                text.innerHTML = `<span class="text-emerald-500 font-bold">เชื่อมสัญญาณคลาวด์สดสำเร็จ (Real-time Cloud Connected)</span>`;
+                
                 updateTodayLatenessCount();
             } catch (err) {
                 console.error(err);
                 indicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-                text.innerText = "การเชื่อมต่อล้มเหลว ตรวจสอบการตรวจสอบสิทธิ์หรือลิงก์ API Web App";
-                showToast("Sync ล้มเหลว", "เกิดปัญหาขัดข้องทางเครือข่ายในการติดต่อคลาวด์", "error");
+                text.innerHTML = `<span class="text-rose-500 font-bold">เกิดข้อผิดพลาดด้านเครือข่าย หรือ URL สคริปต์ไม่ถูกต้อง</span>`;
+                showToast("📡 สัญญาณขัดข้อง", "ไม่สามารถอ่านจากกูเกิลสเปรดชีตได้เนื่องจากปัญหาสิทธิ์การเข้าถึง", "error");
             }
         }
 
+        // อัปเดตสถิติจำนวนคนมาสายวันนี้ (แก้ไขการคิดสถิติเรียบร้อย)
         function updateTodayLatenessCount() {
-            const todayStr = document.getElementById('record-date-picker').value;
-            const count = logsDataset.filter(log => log.timestamp === todayStr).length;
-            document.getElementById('lbl-today-count').innerText = count;
+            const selectedDate = normalizeDate(document.getElementById('record-date-picker').value);
+            // เปรียบเทียบวันที่หลังจากทำการ normalize ป้องกันรูปแบบเพี้ยน
+            const todayLogs = logsDataset.filter(log => normalizeDate(log.timestamp) === selectedDate);
+            
+            const element = document.getElementById('lbl-today-count');
+            element.innerText = todayLogs.length;
+            
+            // เอฟเฟกต์ตัวเลขสั่นสะเทือนนุ่มๆ เมื่อตัวเลขมีการอัปเดต
+            element.classList.remove('scale-110');
+            void element.offsetWidth; // Trigger reflow
+            element.classList.add('scale-110', 'transition-transform', 'duration-300');
         }
 
         // ==========================================
@@ -167,20 +264,20 @@
 
             const filtered = studentsDataset.filter(st => 
                 st.id.toLowerCase().includes(query) || st.name.toLowerCase().includes(query)
-            ).slice(0, 8); // จํากัดไว้แค่ 8 รายการเพื่อความคล่องตัวของ UI
+            ).slice(0, 5); // จำกัด 5 รายการที่ตรงสุดเพื่อความเรียบหรูของหน้าเว็บ
 
             if (filtered.length === 0) {
-                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">❌ ไม่พบข้อมูลนักเรียนคนนี้ในระบบ</div>`;
+                dropdown.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center font-semibold">ไม่พบรายชื่อในระบบโรงเรียนเลยครับ 🔍</div>`;
             } else {
                 filtered.forEach(st => {
                     const div = document.createElement('div');
-                    div.className = "p-3 text-xs border-b border-slate-50 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors";
+                    div.className = "p-3.5 text-xs border-b border-slate-50 hover:bg-emerald-50/50 cursor-pointer flex justify-between items-center transition-all duration-200 hover:pl-5";
                     div.innerHTML = `
                         <div>
-                            <span class="font-bold text-slate-900">${st.name}</span>
-                            <p class="text-[10px] text-slate-400 mt-0.5">ชั้น: ${st.room} | เลขที่: ${st.seatNo}</p>
+                            <span class="font-bold text-slate-800 text-sm">${st.name}</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">ห้องเรียน ม.${st.room} | เลขที่ ${st.seatNo}</p>
                         </div>
-                        <span class="font-mono bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-600">${st.id}</span>
+                        <span class="font-mono bg-slate-100 px-2.5 py-1 rounded-lg font-bold text-slate-500 border border-slate-200/50 text-[10px]">${st.id}</span>
                     `;
                     div.onclick = () => selectStudentProfile(st);
                     dropdown.appendChild(div);
@@ -194,11 +291,14 @@
             document.getElementById('search-results-dropdown').classList.add('hidden');
             document.getElementById('record-student-search').value = "";
             
+            const container = document.getElementById('locked-student-container');
             document.getElementById('locked-name').innerText = st.name;
             document.getElementById('locked-id').innerText = st.id;
             document.getElementById('locked-room').innerText = st.room;
             document.getElementById('locked-seat').innerText = st.seatNo;
-            document.getElementById('locked-student-container').classList.remove('hidden');
+            
+            container.classList.remove('hidden');
+            container.classList.add('animate-premium-entry'); // สไลด์ขึ้นสวยงาม
         }
 
         function resetSelectedStudent() {
@@ -211,18 +311,19 @@
         // ==========================================
         async function executeLatenessSave() {
             if (!selectedStudent) {
-                showToast("กรุณาระบุตัวตน", "โปรดเลือกตัวนักเรียนก่อนทำการเซฟสถิติ", "error");
+                showToast("⚠️ ไม่พบบันทึกข้อมูล", "โปรดเลือกตัวตนนักเรียนให้เสร็จสิ้นก่อนส่งผลสถิติครับ", "error");
                 return;
             }
 
-            const dateStr = document.getElementById('record-date-picker').value;
+            const rawSelectedDate = document.getElementById('record-date-picker').value;
+            const normalizedDateStr = normalizeDate(rawSelectedDate);
             const reason = document.getElementById('record-reason-select').value;
             const notes = document.getElementById('record-notes-input').value.trim() || "-";
-            const logId = "LOG-" + Date.now() + Math.floor(Math.random() * 100);
+            const logId = "L-" + Date.now() + "-" + Math.floor(1000 + Math.random() * 9000);
 
             const payload = {
                 logId: logId,
-                timestamp: dateStr,
+                timestamp: normalizedDateStr,
                 id: selectedStudent.id,
                 name: selectedStudent.name,
                 room: selectedStudent.room,
@@ -233,36 +334,37 @@
 
             const saveBtn = document.getElementById('btn-save-log');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังบันทึกข้อมูลเข้าคลาวด์...</span>`;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> <span>กำลังเข้ารหัสความปลอดภัยและเซฟประวัติ...</span>`;
 
             try {
                 if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
-                    // หากอยู่ในโหมดจำลอง
+                    // โหมดจำลองบันทึกทันที
                     logsDataset.push(payload);
                     localStorage.setItem('mock_logs', JSON.stringify(logsDataset));
                     simulateSuccessSave();
                 } else {
-                    // ยิง POST ข้อมูลไปคลาวด์แบบเลี่ยงการติดบล็อก CORS
-                    const response = await fetch(API_URL, {
+                    // ป้องกัน CORS และอัปโหลดข้อมูลสดเข้า Google Sheet
+                    await fetch(API_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // เทคนิคพิเศษทำให้ส่งข้อมูลไปหา Google Script ได้แม้ติดข้อกำหนด CORS
+                        mode: 'no-cors', 
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                     
-                    // เนื่องจากเป็น no-cors จะอ่านข้อความผลลัพธ์ไม่ได้ ให้เราถือว่าสำเร็จหากเซิร์ฟเวอร์ตอบรับสถานะกลับมา
+                    // เนื่องจากเป็น no-cors เบราว์เซอร์จะไม่แสดงคำตอบให้ JS อ่าน แต่อัปโหลดเข้าชีตได้ทันที ถือเป็นความสำเร็จ
                     logsDataset.push(payload);
                     simulateSuccessSave();
                 }
             } catch (err) {
-                showToast("บันทึกไม่สำเร็จ", "เกิดข้อผิดพลาดในการเชื่อมโยงฐานข้อมูล", "error");
+                showToast("❌ การบันทึกล้มเหลว", "ไม่สามารถส่งต่อสัญญาณคลาวด์ได้ในขณะนี้", "error");
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
             }
         }
 
         function simulateSuccessSave() {
-            showToast("บันทึกสถิติสำเร็จ", `ระบบบันทึกพฤติกรรมสายของ ${selectedStudent.name} แล้ว`, "success");
+            showToast("✅ สำเร็จอย่างงดงาม", `บันทึกพฤติกรรมการมาสายของ ${selectedStudent.name} แล้ว`, "success");
             document.getElementById('record-notes-input').value = "";
             resetSelectedStudent();
             updateTodayLatenessCount();
@@ -277,54 +379,55 @@
 
             const startWeekDate = new Date(startWeekStr);
             const endWeekDate = new Date(startWeekDate);
-            endWeekDate.setDate(endWeekDate.getDate() + 6); // สิ้นสุดสัปดาห์ (อาทิตย์)
+            endWeekDate.setDate(endWeekDate.getDate() + 6); // ล็อกรอบวันถึงวันอาทิตย์สุดสัปดาห์
 
-            // กรอง Logs เฉพาะที่อยู่ในช่วงสัปดาห์ที่กำลังเปิดตรวจ
+            // กรอง Logs ภายในกรอบสัปดาห์ปัจจุบันแบบเปรียบเทียบมาตรฐาน ISO
             const weekLogs = logsDataset.filter(log => {
                 const logDate = new Date(log.timestamp);
                 return logDate >= startWeekDate && logDate <= endWeekDate;
             });
 
-            // อัปเดต KPI ตัวที่ 1: ยอดรวมในสัปดาห์
+            // KPI 1: แสดงจำนวนคนสายสัปดาห์นี้
             document.getElementById('kpi-total-weeks').innerText = weekLogs.length;
 
-            // คัดแยกกลุ่มวิเคราะห์ความถี่พฤติกรรมรายบุคคลในสัปดาห์นี้
-            const studentMap = {};
+            // คัดแยกวิเคราะห์กลุ่มเสียงโดยดึงข้อมูลรายบุคคล
+            const studentFrequencyMap = {};
             weekLogs.forEach(log => {
-                if (!studentMap[log.id]) {
-                    studentMap[log.id] = { details: log, count: 0, dates: [] };
+                if (!studentFrequencyMap[log.id]) {
+                    studentFrequencyMap[log.id] = { details: log, count: 0 };
                 }
-                studentMap[log.id].count++;
-                studentMap[log.id].dates.push(log.timestamp);
+                studentFrequencyMap[log.id].count++;
             });
 
             let highRiskCount = 0;
             let midRiskCount = 0;
             const leaderboardData = [];
 
-            Object.keys(studentMap).forEach(id => {
-                const item = studentMap[id];
-                // เงื่อนไข High Risk: สายสะสมตั้งแต่ 3 วันขึ้นไปในสัปดาห์นั้น
-                if (item.count >= 3) highRiskCount++;
-                // เงื่อนไข Medium Risk: สาย 2 ครั้งในหนึ่งสัปดาห์
-                else if (item.count === 2) midRiskCount++;
+            Object.keys(studentFrequencyMap).forEach(id => {
+                const item = studentFrequencyMap[id];
+                if (item.count >= 3) {
+                    highRiskCount++; // มาสายเกิน 3 วันเป็นต้นไปจัดเป็นกลุ่ม "เสี่ยงระดับสูงมาก"
+                } else if (item.count === 2) {
+                    midRiskCount++; // มาสาย 2 วันเป็นกลุ่ม "เฝ้าระวังกลาง"
+                }
 
                 leaderboardData.push({
                     id: id,
                     name: item.details.name,
-                    roomInfo: `ม.${item.details.room} / เลขที่ ${item.details.seatNo}`,
+                    roomInfo: `ชั้น ม.${item.details.room} / เลขที่ ${item.details.seatNo}`,
                     count: item.count
                 });
             });
 
+            // อัปเดตตัวเลขแบบสั้นกระชับสอดคล้องกับชีตจริง
             document.getElementById('kpi-high-risk').innerText = highRiskCount;
             document.getElementById('kpi-mid-risk').innerText = midRiskCount;
 
-            // วาดตารางลีดเดอร์บอร์ดคนมาสายบ่อยที่สุด
+            // เรียงลำดับนักเรียนที่มาสายบ่อยที่สุดเพื่อส่งตรวจฝ่ายปกครอง
             leaderboardData.sort((a, b) => b.count - a.count);
             renderLeaderboardTable(leaderboardData);
 
-            // คำนวณกราฟประมวลผลแท่ง (กระจายวันทำงาน) และกราฟวงกลมแยกสาเหตุ
+            // ขับเคลื่อนแอนิเมชันกราฟิกสถิติ
             generateDashboardCharts(weekLogs);
         }
 
@@ -333,30 +436,31 @@
             tbody.innerHTML = "";
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">📭 ไม่มีประวัติการเข้าเรียนสายสะสมในสัปดาห์ที่ระบุ</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-12 text-center text-slate-400 font-semibold animate-premium-entry">🍃 ไม่มีรายงานนักเรียนสายสะสมในสัปดาห์ที่คัดกรอง</td></tr>`;
                 return;
             }
 
             data.forEach((st, idx) => {
-                let badge = `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold text-[10px]">เฝ้าระวังปกติ</span>`;
+                let badge = `<span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold text-[10px] border border-slate-200">เฝ้าระวังปกติ</span>`;
                 if (st.count >= 3) {
-                    badge = `<span class="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-full font-bold text-[10px]">🚨 เสี่ยงสูง (เชิญผู้ปกครอง)</span>`;
+                    badge = `<span class="bg-rose-50 text-rose-600 border border-rose-100 px-3 py-1 rounded-full font-bold text-[10px] shadow-sm animate-pulse">🚨 เสี่ยงสูง (เชิญผู้ปกครอง)</span>`;
                 } else if (st.count === 2) {
-                    badge = `<span class="bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full font-bold text-[10px]">⚠️ เสี่ยงกลาง (ตักเตือน)</span>`;
+                    badge = `<span class="bg-amber-50 text-amber-600 border border-amber-100 px-3 py-1 rounded-full font-bold text-[10px] shadow-sm">⚠️ เสี่ยงกลาง (ว่ากล่าวตักเตือน)</span>`;
                 }
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.className = "hover:bg-slate-50/70 transition-all duration-200 border-b border-slate-100 animate-premium-entry";
+                tr.style.animationDelay = `${idx * 50}ms`; // เอฟเฟกต์ดีเลย์การปรากฏของข้อมูลทีละแถวระดับพรีเมียม
                 tr.innerHTML = `
-                    <td class="px-5 py-3 text-center font-bold text-slate-400">${idx + 1}</td>
-                    <td class="px-5 py-3 font-mono font-bold text-slate-700">${st.id}</td>
-                    <td class="px-5 py-3 font-bold text-slate-900">${st.name}</td>
-                    <td class="px-5 py-3 font-medium text-slate-500">${st.roomInfo}</td>
-                    <td class="px-5 py-3 text-center font-bold text-slate-900">${st.count} ครั้ง</td>
-                    <td class="px-5 py-3">${badge}</td>
-                    <td class="px-5 py-3 text-center">
-                        <button onclick="openLogsManagerModal('${st.id}')" class="bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 font-bold px-3 py-1 rounded-xl transition-all duration-150">
-                            <i class="fa-solid fa-folder-open mr-1"></i> ตรวจดู/ลบ
+                    <td class="px-5 py-3.5 text-center font-bold text-slate-400 text-sm">${idx + 1}</td>
+                    <td class="px-5 py-3.5 font-mono font-bold text-emerald-600">${st.id}</td>
+                    <td class="px-5 py-3.5 font-bold text-slate-900">${st.name}</td>
+                    <td class="px-5 py-3.5 font-semibold text-slate-500">${st.roomInfo}</td>
+                    <td class="px-5 py-3.5 text-center font-extrabold text-slate-900 text-sm">${st.count} ครั้ง</td>
+                    <td class="px-5 py-3.5">${badge}</td>
+                    <td class="px-5 py-3.5 text-center">
+                        <button onclick="openLogsManagerModal('${st.id}')" class="premium-btn bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 font-bold px-3 py-1.5 rounded-xl text-xs transition-all duration-300 shadow-sm border border-slate-200/40">
+                            <i class="fa-solid fa-folder-open mr-1"></i> ตรวจรายงาน
                         </button>
                     </td>
                 `;
@@ -365,7 +469,6 @@
         }
 
         function generateDashboardCharts(weekLogs) {
-            // 1. คำนวณวันจันทร์-ศุกร์ เพื่อวาดกราฟแท่ง
             const daysCount = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0 };
             const reasonsCount = {};
 
@@ -377,28 +480,29 @@
                 reasonsCount[log.reason] = (reasonsCount[log.reason] || 0) + 1;
             });
 
-            // วาดกราฟแท่งด้วยดีไซน์ขยายยืดหดของ Tailwind
+            // วาดกราฟแท่งความถี่ด้วย Smooth Scaling Bar
             const barHolder = document.getElementById('chart-bar-holder');
             barHolder.innerHTML = "";
             
             const maxVal = Math.max(...Object.values(daysCount), 1);
             const dayThLabels = { 'Mon': 'จันทร์', 'Tue': 'อังคาร', 'Wed': 'พุธ', 'Thu': 'พฤหัสฯ', 'Fri': 'ศุกร์' };
 
-            Object.keys(daysCount).forEach(day => {
+            Object.keys(daysCount).forEach((day, index) => {
                 const count = daysCount[day];
-                const pct = (count / maxVal) * 80 + 10; // แปลงส่วนสูงเปรียบเทียบ
+                const pct = (count / maxVal) * 80 + 10; 
                 const bar = document.createElement('div');
-                bar.className = "flex flex-col items-center flex-grow group space-y-2";
+                bar.className = "flex flex-col items-center flex-grow group space-y-2.5 animate-premium-entry";
+                bar.style.animationDelay = `${index * 80}ms`;
                 bar.innerHTML = `
-                    <div class="w-8 bg-slate-100 group-hover:bg-emerald-500 rounded-t-lg transition-all relative flex items-end justify-center" style="height: ${pct}%">
-                        <span class="absolute -top-6 text-[10px] font-bold text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity bg-white border shadow px-1.5 py-0.5 rounded">${count} ราย</span>
+                    <div class="w-8 bg-slate-100 group-hover:bg-emerald-500 group-hover:active-glow rounded-t-xl transition-all duration-500 relative flex items-end justify-center" style="height: ${pct}%">
+                        <span class="absolute -top-7 text-[10px] font-extrabold text-white opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 border border-slate-800 shadow-lg px-2 py-0.5 rounded-lg z-10">${count} ราย</span>
                     </div>
-                    <span class="text-[11px] font-bold text-slate-400 group-hover:text-slate-700">${dayThLabels[day]}</span>
+                    <span class="text-[11px] font-bold text-slate-400 group-hover:text-slate-800 transition-colors">${dayThLabels[day]}</span>
                 `;
                 barHolder.appendChild(bar);
             });
 
-            // 2. ประมวลสัดส่วนเหตุผลเพื่อจัดทำ Legend รายการประกอบ
+            // ประมวลเหตุผลประกอบคำชี้แจง
             const legendList = document.getElementById('reasons-legend-list');
             legendList.innerHTML = "";
             const total = weekLogs.length || 1;
@@ -410,11 +514,11 @@
                 const count = reasonsCount[reason];
                 const pct = ((count / total) * 100).toFixed(0);
                 const li = document.createElement('li');
-                li.className = "flex items-center justify-between gap-4";
+                li.className = "flex items-center justify-between gap-4 py-2 border-b border-slate-50 animate-premium-entry";
                 li.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full ${colors[colorIdx % colors.length]}"></span>
-                        <span>${reason}</span>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-full ${colors[colorIdx % colors.length]} active-glow"></span>
+                        <span class="font-bold text-slate-700 text-xs">${reason}</span>
                     </div>
                     <strong class="font-mono text-slate-900">${pct}% (${count})</strong>
                 `;
@@ -432,27 +536,31 @@
             if (studentLogs.length === 0) return;
 
             document.getElementById('mgr-modal-student-name').innerText = studentLogs[0].name;
-            document.getElementById('mgr-modal-student-desc').innerText = `รหัสประจำตัว: ${studentLogs[0].id} | ระดับชั้น: ม.${studentLogs[0].room} / เลขที่ ${studentLogs[0].seatNo}`;
+            document.getElementById('mgr-modal-student-desc').innerText = `รหัสประจำตัว: ${studentLogs[0].id} | ชั้น ม.${studentLogs[0].room} / เลขที่ ${studentLogs[0].seatNo}`;
 
             const tbody = document.getElementById('tbl-mgr-logs-body');
             tbody.innerHTML = "";
 
-            studentLogs.forEach(log => {
+            studentLogs.forEach((log, idx) => {
                 const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors animate-premium-entry";
+                tr.style.animationDelay = `${idx * 40}ms`;
                 tr.innerHTML = `
-                    <td class="px-4 py-2 text-slate-700 font-mono">${log.timestamp}</td>
-                    <td class="px-4 py-2 font-medium text-slate-800">${log.reason}</td>
-                    <td class="px-4 py-2 text-slate-400">${log.notes}</td>
-                    <td class="px-4 py-2 text-center">
-                        <button onclick="triggerDeleteConfirmation('${log.logId}')" class="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs">
-                            <i class="fa-regular fa-trash-can"></i> ลบรายการนี้
+                    <td class="px-4 py-3 text-slate-800 font-mono font-semibold">${log.timestamp}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${log.reason}</td>
+                    <td class="px-4 py-3 text-slate-400 font-medium">${log.notes}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="triggerDeleteConfirmation('${log.logId}')" class="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs transition-colors duration-200">
+                            <i class="fa-regular fa-trash-can mr-1"></i> ลบประวัติแถวนี้
                         </button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('logs-manager-modal').classList.remove('hidden');
+            const modal = document.getElementById('logs-manager-modal');
+            modal.classList.remove('hidden');
+            modal.firstElementChild.classList.add('animate-premium-entry'); // เอฟเฟกต์บานหน้าต่างค่อยๆ เปิดขยาย
         }
 
         function closeLogsManagerModal() {
@@ -461,7 +569,7 @@
 
         function triggerDeleteConfirmation(logId) {
             const modal = document.getElementById('confirm-modal');
-            document.getElementById('confirm-modal-text').innerText = `คุณแน่ใจหรือไม่ว่าต้องการลบล็อกข้อมูลการสายรหัส "${logId}" ออกจากระบบคลาวด์? การทำรายการนี้ไม่สามารถย้อนคืนได้`;
+            document.getElementById('confirm-modal-text').innerText = `คุณแน่ใจหรือไม่ว่าต้องการถอดถอนประวัติมาสายหมายเลข "${logId}"? รายการนี้จะสูญหายอย่างถาวร`;
             modal.classList.remove('hidden');
 
             document.getElementById('confirm-submit-btn').onclick = async function() {
@@ -474,7 +582,7 @@
         }
 
         async function executeDeleteLogFromCloud(logId) {
-            showToast("กำลังดำเนินรายการ", "กำลังส่งคำสั่งขอลบข้อมูลประวัติออกจากระบบคลาวด์...", "info");
+            showToast("⏳ กำลังเตรียมการลบ", "ส่งรหัสคำสั่งไปยังกูเกิลคลาวด์เพื่อถอดถอนรายการแล้ว...", "info");
             
             try {
                 if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
@@ -488,24 +596,23 @@
                         logsDataset = logsDataset.filter(l => l.logId !== logId);
                         handleDeleteSuccess();
                     } else {
-                        showToast("การลบล้มเหลว", "เซิร์ฟเวอร์ปฏิเสธการลบ หรือไม่พบไอดีล็อกนี้", "error");
+                        showToast("❌ การลบล้มเหลว", "เซิร์ฟเวอร์คลาวด์ปฏิเสธการถอนข้อมูล", "error");
                     }
                 }
             } catch (err) {
-                showToast("เครือข่ายขัดข้อง", "ไม่สามารถส่งคำสั่งลบไปยังกูเกิลชีตได้", "error");
+                showToast("📡 สัญญาณไม่ดี", "ไม่สามารถส่งสัญญาณขอลบข้อมูลถึงปลายทางสเปรดชีตได้", "error");
             }
         }
 
         function handleDeleteSuccess() {
-            showToast("ลบข้อมูลสำเร็จ", "ประวัติถูกทำลายออกจากระบบเรียบร้อยแล้ว", "success");
-            // รีโหลดหน้าต่างประวัติย่อยใหม่
+            showToast("🗑️ ลบประวัติเรียบร้อย", "ทำการจัดสัดส่วนระเบียบประวัติใหม่ในระบบฐานข้อมูลแล้ว", "success");
             const checkStillHasLogs = logsDataset.filter(log => log.id === currentEditingStudentId);
             if (checkStillHasLogs.length > 0) {
                 openLogsManagerModal(currentEditingStudentId);
             } else {
                 closeLogsManagerModal();
             }
-            loadDashboardCoreData(); // อัปเดตตารางสรุปหลักเบื้องหลัง
+            loadDashboardCoreData(); 
         }
 
         // ==========================================
@@ -513,7 +620,7 @@
         // ==========================================
         function handlePrintExport() {
             const currentWeek = document.getElementById('dash-date-week-picker').value;
-            document.getElementById('print-date-subtitle').innerText = `รายงานผลประจำสัปดาห์เริ่มต้น: วันจันทร์ที่ ${currentWeek} (พิมพ์รายงานเมื่อ: ${new Date().toLocaleString('th-TH')})`;
+            document.getElementById('print-date-subtitle').innerText = `รายงานผลการตรวจสอบพฤติกรรมสาย ประจำสัปดาห์: เริ่มวันที่ ${currentWeek} (บันทึกพิมพ์วันที่: ${new Date().toLocaleString('th-TH')})`;
             window.print();
         }
 
@@ -529,20 +636,20 @@
             document.getElementById('toast-message').innerText = message;
 
             if (type === 'success') {
-                iconBg.className = "p-2 rounded-xl text-white bg-emerald-500";
+                iconBg.className = "p-2 rounded-xl text-white bg-emerald-500 active-glow shadow-lg shadow-emerald-500/30";
                 icon.className = "fa-solid fa-circle-check";
             } else if (type === 'error') {
-                iconBg.className = "p-2 rounded-xl text-white bg-rose-500";
+                iconBg.className = "p-2 rounded-xl text-white bg-rose-500 shadow-lg shadow-rose-500/30";
                 icon.className = "fa-solid fa-circle-xmark";
             } else {
-                iconBg.className = "p-2 rounded-xl text-white bg-sky-500";
+                iconBg.className = "p-2 rounded-xl text-white bg-sky-500 shadow-lg shadow-sky-500/30";
                 icon.className = "fa-solid fa-circle-info";
             }
 
-            toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-0 opacity-100 transition-all duration-300 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3";
+            toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-0 opacity-100 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) max-w-sm w-full bg-white/95 backdrop-blur shadow-2xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3";
             
             setTimeout(() => {
-                toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-[-150%] opacity-0 transition-all duration-300 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3 pointer-events-none";
+                toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-[-150%] opacity-0 transition-all duration-500 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3 pointer-events-none";
             }, 3500);
         }
 
@@ -563,18 +670,10 @@
                 logsDataset = JSON.parse(savedMockLogs);
             } else {
                 logsDataset = [
-                    { logId: "LOG-01", timestamp: getMondayOfCurrentWeek(new Date()), id: "10003", name: "นายธนพล ขยันมาสาย", room: "6/2", seatNo: "15", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "รถมอเตอร์ไซค์สตาร์ทไม่ติด" }
+                    { logId: "LOG-MOCK-01", timestamp: getMondayOfCurrentWeek(new Date()), id: "10003", name: "นายธนพล ขยันมาสาย", room: "6/2", seatNo: "15", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "รถมอเตอร์ไซค์สตาร์ทไม่ติด" }
                 ];
             }
             updateTodayLatenessCount();
-        }
-
-        function openConnectionSetting() {
-            const newUrl = prompt("กรุณาระบุ Web App URL ของกูเกิลสคริปต์ที่คัดลอกมาเพื่อเปิดโหมด Cloud:", API_URL);
-            if (newUrl !== null) {
-                alert("บันทึกช่องทางการเชื่อมต่อแล้ว ระบบจะทำการรีโหลดหน้าเว็บเพื่อตั้งค่าใหม่");
-                location.reload();
-            }
         }
     </script>
 </body>
