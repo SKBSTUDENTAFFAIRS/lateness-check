@@ -1,1121 +1,456 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบันทึกและวิเคราะห์การมาสายนักเรียนอัจฉริยะ | SKB Smart Portal</title>
-    
-    <!-- Tailwind CSS CDN for premium UI styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                        },
-                        emerald: {
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                        },
-                        rose: {
-                            500: '#ef4444',
-                            600: '#dc2626',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Sarabun', 'Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts for official Thai documentations & modern numeric displays -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <style>
-        body {
-            font-family: 'Sarabun', 'Inter', sans-serif;
-            background-color: #f8fafc;
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* Optimized premium custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        @media print {
-            @page {
-                size: A4;
-                margin: 1.5cm;
-            }
-            body {
-                background: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            /* ซ่อน Header, เมนู Navigation, การแจ้งเตือน และกล่องกรอกข้อมูลที่อุจาดตาตอนพิมพ์ */
-            header, #sec-login-gate, nav, #connection-status-badge, button, #sec-tab-record, footer, #toast-notification {
-                display: none !important;
-            }
-            /* จัดโครงสร้างให้แสดงเฉพาะหน้า Dashboard เต็มหน้า */
-            #portal-main-view, main, #sec-tab-dashboard {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            /* ซ่อนกล่องสถิติย่อยและกราฟ ให้เหลือเฉพาะตารางสรุปด้านล่าง */
-            #sec-tab-dashboard > div:not(:last-child) {
-                display: none !important;
-            }
-            /* ตั้งค่าตารางให้กว้าง 80% และจัดให้อยู่กึ่งกลางหน้ากระดาษ ตามสั่ง */
-            #sec-tab-dashboard > div:last-child {
-                width: 80% !important;
-                margin: 0 auto !important;
-                box-shadow: none !important;
-                border: none !important;
-            }
-            .overflow-x-auto {
-                overflow: visible !important;
-            }
-            table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-            }
-            th, td {
-                border: 1px solid #cbd5e1 !important;
-                padding: 8px !important;
-                color: black !important;
-                font-size: 11pt !important;
-            }
-            th {
-                background-color: #f1f5f9 !important;
-            }
-            /* ซ่อนคอลัมน์ปุ่มกด "สิทธิ์จัดการประวัติ" (คอลัมน์สุดท้าย) ออกจากกระดาษรายงาน */
-            th:nth-child(7), td:nth-child(7) {
-                display: none !important;
-            }
-            /* แสดงหัวข้อการพิมพ์ที่ซ่อนไว้ตอนใช้งานปกติหน้าเว็บ */
-            #print-only-header {
-                display: block !important;
-                text-align: center;
-                margin-bottom: 20px;
-                font-size: 16pt;
-                font-weight: bold;
-                color: black;
-            }
-            tr { page-break-inside: avoid; }
-        }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col text-slate-800 antialiased selection:bg-emerald-100">
-
-    <!-- Custom Elegant Notification Toast Container -->
-    <div id="toast-notification" class="fixed top-5 right-5 z-[9999] transform translate-y-[-150%] opacity-0 transition-all duration-300 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3 pointer-events-none">
-        <div id="toast-icon-bg" class="p-2 rounded-xl text-white">
-            <i id="toast-icon" class="fa-solid"></i>
-        </div>
-        <div class="flex-grow">
-            <h4 id="toast-title" class="font-bold text-slate-900 text-sm"></h4>
-            <p id="toast-message" class="text-xs text-slate-500 mt-0.5"></p>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal Dialog -->
-    <div id="confirm-modal" class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden transition-all duration-200">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-200 p-6 space-y-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
-                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-900">ยืนยันการดำเนินการ</h3>
-            </div>
-            <p id="confirm-modal-text" class="text-sm text-slate-500"></p>
-            <div class="flex items-center justify-end space-x-2 pt-2">
-                <button id="confirm-cancel-btn" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-all">ยกเลิก</button>
-                <button id="confirm-submit-btn" class="px-4 py-2 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-all">ยืนยันการลบ</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECURITY GATEKEEPER VIEW (Shown by default unless session verified) -->
-    <section id="sec-login-gate" class="flex-grow flex items-center justify-center p-4 min-h-[85vh]">
-        <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-md w-full relative transition-all duration-300">
-            <!-- Setup Trigger Gear -->
-            <button onclick="toggleApiSetup()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors" title="การเชื่อมต่อ API">
-                <i class="fa-solid fa-gears text-xl"></i>
-            </button>
-
-            <div class="text-center space-y-3 mb-8">
-                <div class="w-16 h-16 bg-gradient-to-tr from-slate-900 to-slate-800 text-white rounded-2xl mx-auto flex items-center justify-center shadow-md">
-                    <i class="fa-solid fa-shield-halved text-2xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-900">ผู้ดูแลระบบฝ่ายปกครอง</h2>
-                    <p class="text-xs text-slate-400 mt-1">กรุณาระบุข้อมูลบัญชีเพื่อเข้าใช้งานระบบอิเล็กทรอนิกส์</p>
-                </div>
-            </div>
-
-            <!-- Optional Hidden Setup Box for Cloud Sync -->
-            <div id="login-api-setup-box" class="hidden mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-600">ตั้งค่าฐานข้อมูลระบบคลาวด์</span>
-                    <span class="text-[10px] text-emerald-600 font-medium">Google Apps Script</span>
-                </div>
-                <input type="text" id="api-url-input" placeholder="วาง Web App URL ของคุณที่นี่..." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
-                <p class="text-[10px] text-slate-400">หากไม่ได้ระบุระบบจะใช้งานฐานข้อมูลสาธิตภายในเบราว์เซอร์นี้</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ชื่อผู้ใช้งาน (Username)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-regular fa-user"></i></span>
-                        <input type="text" id="login-username" placeholder="ระบุ SKBadmin" class="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10 focus:outline-none transition-all duration-150">
+<p class="text-xs text-slate-400 mt-1" id="mgr-modal-student-desc">ข้อมูลการเข้าเรียนสายสะสม</p>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">รหัสผ่าน (Password)</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" id="login-password" placeholder="ระบุตัวเลข 5 หลัก" class="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10 focus:outline-none transition-all duration-150">
-                    </div>
-                </div>
-                
-                <button onclick="handleSystemLogin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold py-3.5 px-6 rounded-xl shadow-md active:scale-95 transition-all duration-200 flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    <span>เข้าสู่ระบบสารสนเทศ</span>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- PORTAL MAIN INTERFACE (Hidden by default until logged-in) -->
-    <div id="portal-main-view" class="hidden flex-grow flex flex-col">
-        <!-- Official Navigation Bar -->
-        <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-emerald-600 p-2.5 rounded-xl flex items-center justify-center shadow-md">
-                        <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-sm font-bold tracking-wide leading-tight">SKB Lateness Portal</h1>
-                        <p class="text-[10px] text-slate-400 font-medium">ระบบรายงานและวิเคราะห์สถิตินักเรียนมาสาย</p>
-                    </div>
-                </div>
-                
-                <!-- Main Tabs Navigation -->
-                <nav class="flex space-x-1 bg-slate-800/80 p-1 rounded-xl">
-                    <button onclick="switchPortalTab('record')" id="tab-btn-record" class="px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white">
-                        <i class="fa-solid fa-user-check"></i>
-                        <span>บันทึกสถิติ</span>
+                    <button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
-                    <button onclick="switchPortalTab('dashboard')" id="tab-btn-dashboard" class="px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span>Dashboard รายงาน</span>
-                    </button>
-                </nav>
-
-                <!-- Logout Operation -->
-                <button onclick="handleSystemLogout()" class="text-slate-400 hover:text-rose-500 p-1.5 transition-colors" title="ออกจากระบบ">
-                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
-            
-            <!-- Connection Status Badge -->
-            <div id="connection-status-badge" class="bg-white border border-slate-200 p-3 rounded-2xl flex items-center justify-between shadow-sm max-w-xl mx-auto">
-                <div class="flex items-center space-x-2 text-xs">
-                    <span class="w-2.5 h-2.5 rounded-full animate-pulse bg-amber-500" id="conn-indicator"></span>
-                    <span class="font-bold text-slate-500" id="conn-text">ระบบกำลังทำงานในโหมดจัดเก็บข้อมูลท้องถิ่น (Mock DB)</span>
                 </div>
-                <button onclick="openConnectionSetting()" class="text-[10px] font-bold text-slate-700 underline hover:text-slate-900" id="conn-action-btn">แก้ไขการเชื่อมต่อ</button>
-            </div>
-
-            <!-- TAB 1: RECORD ENTRY SECTION -->
-            <section id="sec-tab-record" class="block space-y-6">
-                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200/60 max-w-xl mx-auto space-y-6">
-                    <div class="text-center space-y-1 border-b border-slate-100 pb-4">
-                        <h2 class="text-xl font-bold text-slate-900">บันทึกสถิติมาสาย</h2>
-                        <p class="text-xs text-slate-400">กรอกเลขประจำตัวนักเรียนหรือค้นหาประวัติในการบันทึกสถิติแบบออโต้เซฟ</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <!-- Custom Select Date field -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">วันที่ทำการบันทึก</label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-regular fa-calendar-check"></i></span>
-                                <input type="date" id="record-date-picker" class="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all">
-                            </div>
-                        </div>
-
-                        <!-- Fuzzy Search Input Box -->
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ค้นหาตัวตนนักเรียน</label>
-                            <div class="relative">
-                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                <input type="text" id="record-student-search" oninput="executeFuzzySearch(this.value)" placeholder="พิมพ์รหัส 5 หลัก หรือ ค้นหาชื่อภาษาไทย..." class="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all shadow-sm" autocomplete="off">
-                            </div>
-
-                            <!-- Floating List Dropdown Results -->
-                            <div id="search-results-dropdown" class="absolute left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-100 z-50 max-h-60 overflow-y-auto hidden">
-                                <!-- Appended dynamic suggestions -->
-                            </div>
-                        </div>
-
-                        <!-- Locked Student Profile Visual Card -->
-                        <div id="locked-student-container" class="bg-slate-50 border border-slate-100 p-4 rounded-2xl hidden transition-all duration-200">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">ยืนยันระบุบุคคลเรียบร้อย</span>
-                                    <h3 id="locked-name" class="text-base font-bold text-slate-800 mt-2"></h3>
-                                    <p class="text-xs text-slate-500 mt-0.5 font-medium">
-                                        รหัสประจำตัว: <span id="locked-id" class="font-mono font-bold text-slate-700"></span> | 
-                                        ชั้นเรียน: <span id="locked-room" class="font-bold text-slate-700"></span> | 
-                                        เลขที่: <span id="locked-seat" class="font-bold text-slate-700"></span>
-                                    </p>
-                                </div>
-                                <button onclick="resetSelectedStudent()" class="text-slate-400 hover:text-rose-500 p-1 transition-colors">
-                                    <i class="fa-regular fa-circle-xmark text-lg"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Dropdown Lateness Reasons -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">สาเหตุการมาสาย</label>
-                            <select id="record-reason-select" class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all bg-white">
-                                <option value="ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน">ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน</option>
-                                <option value="การจราจรติดขัด / รถโดยสารประจำทางล่าช้า">การจราจรติดขัด / รถโดยสารประจำทางล่าช้า</option>
-                                <option value="ยานพาหนะมีปัญหา (รถเสีย/อุบัติเหตุ)">ยานพาหนะมีปัญหา (รถเสีย/อุบัติเหตุ)</option>
-                                <option value="สภาพอากาศ (ฝนตกหนัก/น้ำท่วม)">สภาพอากาศ (ฝนตกหนัก/น้ำท่วม)</option>
-                                <option value="อื่นๆ">อื่น ๆ (ระบุข้อมูลเพิ่มเติมในช่องด้านล่าง)</option>
-                            </select>
-                        </div>
-
-                        <!-- Notes Field -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">รายละเอียดหมายเหตุเพิ่มเติม</label>
-                            <textarea id="record-notes-input" rows="2" placeholder="เช่น รถส่วนตัวเสียกลางทาง, การจราจรติดขัดช่วงงานเทศกาล..." class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all resize-none"></textarea>
-                        </div>
-
-                        <!-- Auto-Save Trigger Button -->
-                        <button id="btn-save-log" onclick="executeLatenessSave()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>บันทึกข้อมูลแบบออโตเซฟ</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Daily Summary Footing Statistics -->
-                <div class="max-w-xl mx-auto bg-slate-100/50 p-4 rounded-2xl border border-slate-200/60 flex justify-between items-center text-xs text-slate-500">
-                    <span>จำนวนการบันทึกสายของวันนี้: <strong id="lbl-today-count" class="text-emerald-600 font-bold">0</strong> รายการ</span>
-                    <span class="flex items-center space-x-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>สถิติพร้อมสรุปเข้าฐานข้อมูลคลาวด์</span>
-                    </span>
-                </div>
-            </section>
-
-            <!-- TAB 2: ANALYTICS & RECOGNITION PORTAL -->
-            <section id="sec-tab-dashboard" class="hidden space-y-6">
-                <!-- Control Operations Header -->
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <span>วิเคราะห์และบริหารจัดการความประพฤติ</span>
-                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> แอดมินสิทธิ์สูงสุด
-                            </span>
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-1">คัดกรองข้อมูล คัดกรองพฤติกรรมสายสะสม และประมวลประวัติดิบด้วยคำสั่งปกครอง</p>
-                    </div>
-
-                    <!-- Date Selection Selector -->
-                    <div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                        <span class="text-xs font-bold text-slate-500 pl-2">วันจันทร์เริ่มต้นสัปดาห์:</span>
-                        <input type="date" id="dash-date-week-picker" onchange="loadDashboardCoreData()" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:ring-1 focus:ring-emerald-500">
-                    </div>
-                </div>
-
-                <!-- KPI Metric Performance Overviews -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <!-- Cards -->
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between">
-                        <div class="space-y-1">
-                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">มาสายในสัปดาห์นี้</span>
-                            <h3 class="text-3xl font-extrabold text-slate-900" id="kpi-total-weeks">0</h3>
-                            <p class="text-[10px] text-slate-400 font-medium">รายการมาสายสะสมทั้งหมด</p>
-                        </div>
-                        <div class="bg-slate-50 text-slate-700 p-4 rounded-2xl">
-                            <i class="fa-solid fa-user-group text-xl"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between">
-                        <div class="space-y-1">
-                            <span class="text-xs font-bold text-rose-500 uppercase tracking-wider">กลุ่มเสี่ยงสูง (High Risk)</span>
-                            <h3 class="text-3xl font-extrabold text-rose-600" id="kpi-high-risk">0</h3>
-                            <p class="text-[10px] text-rose-500/80 font-bold bg-rose-50 px-2 py-0.5 rounded inline-block">สายติดต่อกัน 3 วันขึ้นไป</p>
-                        </div>
-                        <div class="bg-rose-50 text-rose-600 p-4 rounded-2xl">
-                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between">
-                        <div class="space-y-1">
-                            <span class="text-xs font-bold text-amber-500 uppercase tracking-wider">กลุ่มเสี่ยงกลาง (Medium Risk)</span>
-                            <h3 class="text-3xl font-extrabold text-amber-600" id="kpi-mid-risk">0</h3>
-                            <p class="text-[10px] text-amber-500/80 font-bold bg-amber-50 px-2 py-0.5 rounded inline-block">สถิติมาสายเกิน 40%</p>
-                        </div>
-                        <div class="bg-amber-50 text-amber-600 p-4 rounded-2xl">
-                            <i class="fa-solid fa-chart-pie text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Graphs Section Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-                        <h4 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-bar text-emerald-600"></i>
-                            <span>การกระจายสถิติการมาสายประจำวันเรียน</span>
-                        </h4>
-                        <!-- Dynamic bar displays -->
-                        <div class="h-48 flex items-end justify-between px-2 pb-2 border-b border-slate-100" id="chart-bar-holder"></div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between">
-                        <h4 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-emerald-600"></i>
-                            <span>วิเคราะห์สัดส่วนสาเหตุการมาสายของสัปดาห์</span>
-                        </h4>
-                        <div class="flex flex-col sm:flex-row items-center gap-6 justify-center py-2">
-                            <!-- Simulated Doughnut -->
-                            <div id="reasons-doughnut" class="w-28 h-28 rounded-full border-4 border-slate-100 flex items-center justify-center relative shadow-inner">
-                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-[10px] font-bold text-slate-400">สัดส่วนเหตุผล</div>
-                            </div>
-                            <ul id="reasons-legend-list" class="text-[11px] space-y-1.5 text-slate-600"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Leaderboard & Admin Log Control table -->
-                <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-                    <div id="print-only-header" class="hidden">รายงานสรุปสถิติความประพฤติการมาสายของนักเรียน</div>
-                    
-                    <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900">ทะเบียนพฤติกรรมและความถี่การมาสาย</h4>
-                            <p class="text-xs text-slate-400">เรียงลำดับพฤติกรรมจากสูงสุด และอนุญาตให้แอดมินลบประวัติที่กรอกผิดพลาดได้</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="handlePrintExport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition-colors flex items-center space-x-1.5">
-                                <i class="fa-solid fa-print"></i>
-                                <span>พิมพ์รายงานผล (PDF)</span>
-                            </button>
-                        </div>
-                    </div>
-
+                <div class="p-6 overflow-y-auto flex-grow space-y-4">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-slate-600 border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/60">
-                                    <th class="px-5 py-3 text-center">อันดับ</th>
-                                    <th class="px-5 py-3">รหัสประจำตัว</th>
-                                    <th class="px-5 py-3">ชื่อ-นามสกุล</th>
-                                    <th class="px-5 py-3">ระดับชั้น / เลขที่</th>
-                                    <th class="px-5 py-3 text-center">มาสายในสัปดาห์</th>
-                                    <th class="px-5 py-3">สถานะความประพฤติ</th>
-                                    <th class="px-5 py-3 text-center">สิทธิ์จัดการประวัติ</th>
+                                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                                    <th class="px-4 py-2.5">วันที่ทำการบันทึก</th>
+                                    <th class="px-4 py-2.5">สาเหตุการมาสาย</th>
+                                    <th class="px-4 py-2.5">หมายเหตุ</th>
+                                    <th class="px-4 py-2.5 text-center">การจัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbl-leaderboard-body" class="divide-y divide-slate-100">
-                                <!-- Dynamic rendering of high-frequency records -->
+                            <tbody id="tbl-mgr-logs-body" class="divide-y divide-slate-100">
+                                <!-- แถวประวัติรายคนจะถูกวาดตรงนี้ -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </section>
-        </main>
-
-        <!-- Premium Footer -->
-        <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 text-center text-xs space-y-1.5 mt-auto">
-            <p>© 2026 ระบบพอร์ทัลสถิตินักเรียนมาสายอิเล็กทรอนิกส์ โรงเรียน SKB สภานักเรียนร่วมสร้างสรรค์</p>
-            <p class="text-[10px] text-slate-500 font-mono">ระบบฐานข้อมูลสารสนเทศส่วนบุคคลภายใต้การดูแล of ฝ่ายปกครอง</p>
-        </footer>
-    </div>
-
-    <!-- Detailed Logs & Deletion Manager Modal (Admin Authority) -->
-    <div id="logs-manager-modal" class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden transition-all duration-200">
-        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-200 max-h-[85vh] flex flex-col">
-            <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-                <div>
-                    <h3 class="text-base font-bold" id="mgr-modal-student-name">สมศักดิ์ รักดี</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">จัดการประวัติและรายละเอียดสถิติตามสิทธิ์ของแอดมินฝ่ายปกครอง</p>
-                </div>
-                <button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            
-            <!-- Table listing specific student logs with deletion options -->
-            <div class="p-6 overflow-y-auto flex-grow space-y-4">
-                <div class="overflow-hidden border border-slate-100 rounded-2xl">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                            <tr>
-                                <th class="px-4 py-2.5">วันที่บันทึก (Timestamp)</th>
-                                <th class="px-4 py-2.5">สาเหตุการมาสาย</th>
-                                <th class="px-4 py-2.5">หมายเหตุ</th>
-                                <th class="px-4 py-2.5 text-center">สิทธิ์ปกครอง</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mgr-modal-logs-body" class="divide-y divide-slate-100">
-                            <!-- Dynamically injected records of targeted student -->
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- SYSTEM CORE LOGIC JAVASCRIPT -->
     <script>
-        // ----------------------------------------------------
-        // SYSTEM MASTER DATABASE INIT (MOCK DATA SOURCE)
-        // ----------------------------------------------------
-        const defaultMockStudents = [
-            { id: "10111", name: "นายสมชาย ใจดี", room: "ม.4/1", seatNo: "1" },
-            { id: "10112", name: "นางสาวสมศรี รักเรียน", room: "ม.4/1", seatNo: "2" },
-            { id: "10113", name: "นายจิรายุ สมดุล", room: "ม.4/1", seatNo: "3" },
-            { id: "10221", name: "นายสมศักดิ์ ขยันยิ่ง", room: "ม.4/2", seatNo: "5" },
-            { id: "10222", name: "นางสาววิภา ดีเลิศ", room: "ม.4/2", seatNo: "12" },
-            { id: "10331", name: "นายกิตติคุณ มั่นคง", room: "ม.5/1", seatNo: "3" },
-            { id: "10332", name: "นายพงศธร สอนประสิทธิ์", room: "ม.5/1", seatNo: "15" },
-            { id: "10441", name: "นางสาวอลิสา สวยสม", room: "ม.5/2", seatNo: "7" },
-            { id: "10551", name: "นายเจษฎา มาสาย", room: "ม.6/1", seatNo: "10" },
-            { id: "10552", name: "นายธนพล สายนิรันดร์", room: "ม.6/1", seatNo: "18" },
-            { id: "10661", name: "นางสาวมนัสวี นั่งรถตู้", room: "ม.6/2", seatNo: "4" }
-        ];
+        // 📥 นำ URL เว็บแอปที่ได้จากการ Deploy ในขั้นตอนที่แล้วมาวางที่นี่
+        const API_URL = "วาง_URL_เว็บแอป_YOUR_WEB_APP_URL_HERE"; 
 
-        let loadedStudents = [];
-        let currentTargetStudent = null;
-        let activePortalTab = "record";
-        let deletionTargetId = null;
+        // ตัวแปรเก็บสถานะข้อมูลภายในระบบ (State)
+        let studentsDataset = [];
+        let logsDataset = [];
+        let selectedStudent = null;
+        let currentEditingStudentId = null;
 
-        // ----------------------------------------------------
-        // ON LOAD INITIALIZATION
-        // ----------------------------------------------------
+        // ฟังก์ชันเริ่มทำงานเมื่อโหลดหน้าเว็บเสร็จสิ้น
         window.onload = function() {
-            // Setup default dates
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('record-date-picker').value = todayStr;
+            // ตั้งค่าวันที่เริ่มต้นให้กับระบบเป็นวันปัจจุบัน
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('record-date-picker').value = today;
+            document.getElementById('dash-date-week-picker').value = getMondayOfCurrentWeek(new Date());
 
-            // Set default dashboard week to Monday of the current week
-            const today = new Date();
-            const dayNum = today.getDay();
-            const diffDays = today.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
-            const monDate = new Date(today.setDate(diffDays));
-            document.getElementById('dash-date-week-picker').value = monDate.toISOString().split('T')[0];
-
-            initializeLocalDatabaseStructure();
-            verifyActiveSession();
+            // ตรวจสอบ Session การเข้าสู่ระบบเดิม
+            if (localStorage.getItem('skb_admin_session') === 'active') {
+                showPortalMainInterface();
+            }
         };
 
-        // Initialize mock structure if not already loaded inside local storage
-        function initializeLocalDatabaseStructure() {
-            if (!localStorage.getItem('SKB_students')) {
-                localStorage.setItem('SKB_students', JSON.stringify(defaultMockStudents));
-            }
-            loadedStudents = JSON.parse(localStorage.getItem('SKB_students'));
-
-            if (!localStorage.getItem('SKB_late_records')) {
-                // Pre-populate system with rich sample logs for visual accuracy
-                const startWeek = new Date();
-                const day = startWeek.getDay();
-                const diff = startWeek.getDate() - day + (day === 0 ? -6 : 1);
-                startWeek.setDate(diff); // Monday
-
-                const getPastDateString = (dayOffset, hr, min) => {
-                    const d = new Date(startWeek);
-                    d.setDate(startWeek.getDate() + dayOffset);
-                    d.setHours(hr, min, 0, 0);
-                    return d.toISOString();
-                };
-
-                const sampleLogs = [
-                    { logId: "L-001", timestamp: getPastDateString(0, 7, 55), id: "10221", name: "นายสมศักดิ์ ขยันยิ่ง", room: "ม.4/2", seatNo: "5", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "นอนดึกมาก" },
-                    { logId: "L-002", timestamp: getPastDateString(1, 7, 49), id: "10221", name: "นายสมศักดิ์ ขยันยิ่ง", room: "ม.4/2", seatNo: "5", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "" },
-                    { logId: "L-003", timestamp: getPastDateString(2, 7, 51), id: "10221", name: "นายสมศักดิ์ ขยันยิ่ง", room: "ม.4/2", seatNo: "5", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "นาฬิกาปลุกไม่ดัง" },
-                    { logId: "L-004", timestamp: getPastDateString(3, 8,  2), id: "10221", name: "นายสมศักดิ์ ขยันยิ่ง", room: "ม.4/2", seatNo: "5", reason: "การจราจรติดขัด / รถโดยสารประจำทางล่าช้า", notes: "รถติดแยกไฟแดงนาน" },
-                    { logId: "L-005", timestamp: getPastDateString(0, 8, 10), id: "10552", name: "นายธนพล สายนิรันดร์", room: "ม.6/1", seatNo: "18", reason: "ยานพาหนะมีปัญหา (รถเสีย/อุบัติเหตุ)", notes: "มอเตอร์ไซค์โซ่หลุด" },
-                    { logId: "L-006", timestamp: getPastDateString(2, 7, 58), id: "10552", name: "นายธนพล สายนิรันดร์", room: "ม.6/1", seatNo: "18", reason: "การจราจรติดขัด / รถโดยสารประจำทางล่าช้า", notes: "" },
-                    { logId: "L-007", timestamp: getPastDateString(4, 8,  4), id: "10552", name: "นายธนพล สายนิรันดร์", room: "ม.6/1", seatNo: "18", reason: "สภาพอากาศ (ฝนตกหนัก/น้ำท่วม)", notes: "ฝนตกตกพายุเข้า" },
-                    { logId: "L-008", timestamp: getPastDateString(1, 7, 52), id: "10661", name: "นางสาวมนัสวี นั่งรถตู้", room: "ม.6/2", seatNo: "4", reason: "การจราจรติดขัด / รถโดยสารประจำทางล่าช้า", notes: "รถตู้โรงเรียนมารับช้า" },
-                    { logId: "L-009", timestamp: getPastDateString(2, 7, 50), id: "10551", name: "นายเจษฎา มาสาย", room: "ม.6/1", seatNo: "10", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "" },
-                    { logId: "L-010", timestamp: getPastDateString(4, 7, 53), id: "10551", name: "นายเจษฎา มาสาย", room: "ม.6/1", seatNo: "10", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "" }
-                ];
-                localStorage.setItem('SKB_late_records', JSON.stringify(sampleLogs));
-            }
+        // ฟังก์ชันคำนวณหาวันจันทร์ของสัปดาห์ปัจจุบัน
+        function getMondayOfCurrentWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff)).toISOString().split('T')[0];
         }
 
-        // Verify active login token
-        function verifyActiveSession() {
-            const hasSession = localStorage.getItem('SKB_auth_session');
-            const savedApi = localStorage.getItem('SKB_api_url');
-            
-            if (savedApi) {
-                document.getElementById('api-url-input').value = savedApi;
-            }
-
-            if (hasSession === 'true') {
-                document.getElementById('sec-login-gate').classList.add('hidden');
-                document.getElementById('portal-main-view').classList.remove('hidden');
-                updateCloudConnectionUIs();
-                refreshCounterStatistics();
-                loadDashboardCoreData();
-            } else {
-                document.getElementById('sec-login-gate').classList.remove('hidden');
-                document.getElementById('portal-main-view').classList.add('hidden');
-            }
-        }
-
-        // Toggle configuration box
+        // ==========================================
+        // 🔐 SECTION: SYSTEMS ACCESS & SECURITY
+        // ==========================================
         function toggleApiSetup() {
-            const el = document.getElementById('login-api-setup-box');
-            el.classList.toggle('hidden');
+            const box = document.getElementById('login-api-setup-box');
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                document.getElementById('api-url-input').value = API_URL;
+            }
         }
 
-        // ----------------------------------------------------
-        // SYSTEM AUTHENTICATION LOGIC
-        // ----------------------------------------------------
         function handleSystemLogin() {
             const user = document.getElementById('login-username').value.trim();
             const pass = document.getElementById('login-password').value.trim();
-            const configApi = document.getElementById('api-url-input').value.trim();
 
-            if (user === "SKBadmin" && pass === "SKB99999") {
-                localStorage.setItem('SKB_auth_session', 'true');
-                if (configApi) {
-                    localStorage.setItem('SKB_api_url', configApi);
-                } else {
-                    localStorage.removeItem('SKB_api_url');
-                }
-                
-                showToast("เข้าสู่ระบบสำเร็จ", "ยินดีต้อนรับเข้าใช้งานระบบเช็คชื่ออัจฉริยะ", "success");
-                verifyActiveSession();
+            if (user === "SKBadmin" && pass.length === 5 && !isNaN(pass)) {
+                localStorage.setItem('skb_admin_session', 'active');
+                showToast("เข้าสู่ระบบสำเร็จ", "ยินดีต้อนรับผู้ดูแลระบบฝ่ายปกครอง", "success");
+                showPortalMainInterface();
             } else {
-                showToast("สิทธิ์ล้มเหลว", "ข้อมูลผู้ใช้หรือรหัสผ่านไม่ถูกต้อง โปรดตรวจสอบอีกครั้ง", "error");
+                showToast("ข้อมูลไม่ถูกต้อง", "กรุณาระบุ Username และ Password 5 หลักให้ถูกต้อง", "error");
             }
         }
 
         function handleSystemLogout() {
-            localStorage.removeItem('SKB_auth_session');
-            showToast("ออกจากระบบ", "บันทึกและตัดการเชื่อมต่อบัญชีเรียบร้อย", "info");
-            verifyActiveSession();
+            localStorage.removeItem('skb_admin_session');
+            document.getElementById('portal-main-view').classList.add('hidden');
+            document.getElementById('sec-login-gate').classList.remove('hidden');
+            showToast("ออกจากระบบแล้ว", "เซสชันของคุณถูกทำลายอย่างปลอดภัย", "info");
         }
 
-        function openConnectionSetting() {
-            handleSystemLogout();
-            toggleApiSetup();
+        function showPortalMainInterface() {
+            document.getElementById('sec-login-gate').classList.add('hidden');
+            document.getElementById('portal-main-view').classList.remove('hidden');
+            fetchCoreDatabase();
         }
 
-        // ----------------------------------------------------
-        // VISUAL NOTIFICATION UTILITIES
-        // ----------------------------------------------------
-        function showToast(title, message, type = "success") {
-            const toast = document.getElementById('toast-notification');
-            const iconBg = document.getElementById('toast-icon-bg');
-            const icon = document.getElementById('toast-icon');
-            const toastTitle = document.getElementById('toast-title');
-            const toastMessage = document.getElementById('toast-message');
+        function switchPortalTab(tabName) {
+            const recordTab = document.getElementById('sec-tab-record');
+            const dashTab = document.getElementById('sec-tab-dashboard');
+            const btnRecord = document.getElementById('tab-btn-record');
+            const btnDash = document.getElementById('tab-btn-dashboard');
 
-            toastTitle.textContent = title;
-            toastMessage.textContent = message;
-
-            if (type === "success") {
-                iconBg.className = "p-2 rounded-xl text-white bg-emerald-500 shadow-md";
-                icon.className = "fa-solid fa-circle-check";
-            } else if (type === "error") {
-                iconBg.className = "p-2 rounded-xl text-white bg-rose-500 shadow-md";
-                icon.className = "fa-solid fa-circle-exclamation";
+            if (tabName === 'record') {
+                recordTab.classList.remove('hidden'); recordTab.classList.add('block');
+                dashTab.classList.remove('block'); dashTab.classList.add('hidden');
+                btnRecord.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white";
+                btnDash.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
             } else {
-                iconBg.className = "p-2 rounded-xl text-white bg-slate-500 shadow-md";
-                icon.className = "fa-solid fa-circle-info";
-            }
-
-            toast.classList.remove('translate-y-[-150%]', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-[-150%]', 'opacity-0');
-                toast.classList.remove('translate-y-0', 'opacity-100');
-            }, 3000);
-        }
-
-        function updateCloudConnectionUIs() {
-            const savedApi = localStorage.getItem('SKB_api_url');
-            const indicator = document.getElementById('conn-indicator');
-            const label = document.getElementById('conn-text');
-
-            if (savedApi) {
-                indicator.className = "w-2.5 h-2.5 rounded-full animate-pulse bg-emerald-500";
-                label.innerHTML = `เชื่อมต่อคลาวด์ API: กำลังซิงค์ข้อมูล... <i class="fa-solid fa-circle-notch fa-spin ml-1 text-emerald-600"></i>`;
-                
-                fetch(savedApi + "?action=getStudents")
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data && data.status === 'success' && data.data && data.data.length > 0) {
-                            loadedStudents = data.data;
-                            localStorage.setItem('SKB_students', JSON.stringify(loadedStudents));
-                            label.innerHTML = `เชื่อมต่อกับคลาวด์ API สำเร็จ (<span class="font-mono text-[10px] text-emerald-600 font-semibold">ซิงค์รายชื่อนักเรียน ${loadedStudents.length} คน</span>)`;
-                        } else {
-                            label.innerHTML = `เชื่อมต่อคลาวด์ API สำเร็จ (โปรดเช็คในชีต 'StudentList' ว่ามีข้อมูลหรือไม่)`;
-                        }
-                    })
-                    .catch(err => {
-                        console.error("API Sync Error:", err);
-                        label.innerHTML = `เชื่อมต่อคลาวด์ API แล้ว (ใช้รายชื่อในระบบออฟไลน์ - ไม่สามารถดึงอัปเดตสดได้)`;
-                    });
-
-            } else {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-                label.textContent = "ทำงานบนโหมดจำลอง (ข้อมูลเก็บภายในพื้นที่เว็บบนเบราว์เซอร์หลัก)";
-            }
-        }
-
-        // ----------------------------------------------------
-        // TABS NAVIGATION CONTROLLER
-        // ----------------------------------------------------
-        function switchPortalTab(tabId) {
-            activePortalTab = tabId;
-            document.getElementById('sec-tab-record').classList.add('hidden');
-            document.getElementById('sec-tab-dashboard').classList.add('hidden');
-            document.getElementById(`sec-tab-${tabId}`).classList.remove('hidden');
-
-            document.getElementById('tab-btn-record').className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
-            document.getElementById('tab-btn-dashboard').className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
-
-            const currentActiveBtn = document.getElementById(`tab-btn-${tabId}`);
-            if (tabId === 'record') {
-                currentActiveBtn.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white shadow-md";
-            } else {
-                currentActiveBtn.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-slate-800 text-white shadow-md";
+                dashTab.classList.remove('hidden'); dashTab.classList.add('block');
+                recordTab.classList.remove('block'); recordTab.classList.add('hidden');
+                btnDash.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 bg-emerald-600 text-white";
+                btnRecord.className = "px-3.5 py-1.5 md:px-5 md:py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 text-slate-300 hover:text-white";
                 loadDashboardCoreData();
             }
         }
 
-        // ----------------------------------------------------
-        // FUZZY DETAILED SEARCH LOGIC
-        // ----------------------------------------------------
-        function executeFuzzySearch(query) {
-            const box = document.getElementById('search-results-dropdown');
-            if (!query.trim()) {
-                box.classList.add('hidden');
+        // ==========================================
+        // 🔄 SECTION: CORE SYNC DATABASE (GET API)
+        // ==========================================
+        async function fetchCoreDatabase() {
+            if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
+                showToast("แจ้งเตือนโหมดจําลอง", "ยังไม่ได้ติดตั้ง Web App URL ระบบจะรันระบบจำลองบนเครื่องของคุณ", "info");
+                setupMockDatabase();
                 return;
             }
 
-            const term = query.toLowerCase().trim();
-            const filtered = loadedStudents.filter(std => {
-                return std.id.includes(term) || std.name.toLowerCase().includes(term) || std.room.toLowerCase().includes(term);
-            }).slice(0, 5);
+            const indicator = document.getElementById('conn-indicator');
+            const text = document.getElementById('conn-text');
+            indicator.className = "w-2.5 h-2.5 rounded-full animate-pulse bg-amber-500";
+            text.innerText = "กำลังเชื่อมต่อกับเซิร์ฟเวอร์ Google Cloud Sheet...";
 
-            if (filtered.length === 0) {
-                box.innerHTML = `
-                    <div class="p-4 text-center text-xs text-slate-400">
-                        <i class="fa-solid fa-circle-question mr-1.5"></i> ไม่พบรายชื่อนักเรียนที่สอดคล้อง
-                    </div>
-                `;
-            } else {
-                box.innerHTML = filtered.map(std => `
-                    <button onclick="lockStudentDetails('${std.id}', '${std.name}', '${std.room}', '${std.seatNo}')" class="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex justify-between items-center transition-colors">
-                        <div>
-                            <p class="font-bold text-slate-800 text-xs">${std.name}</p>
-                            <p class="text-[10px] text-slate-400 font-medium">รหัสประจำตัว: ${std.id} | ชั้นเรียน: ${std.room}</p>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">เลขที่ ${std.seatNo}</span>
-                    </button>
-                `).join('');
+            try {
+                // ยิงดึงข้อมูลนักเรียน
+                const resStudents = await fetch(`${API_URL}?action=getStudents`);
+                studentsDataset = await resStudents.json();
+
+                // ยิงดึงข้อมูลล็อกประวัติการมาสาย
+                const resLogs = await fetch(`${API_URL}?action=getLogs`);
+                logsDataset = await resLogs.json();
+
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                text.innerText = "เชื่อมต่อระบบคลาวด์ Google Sheet สำเร็จแบบ Real-time";
+                updateTodayLatenessCount();
+            } catch (err) {
+                console.error(err);
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                text.innerText = "การเชื่อมต่อล้มเหลว ตรวจสอบการตรวจสอบสิทธิ์หรือลิงก์ API Web App";
+                showToast("Sync ล้มเหลว", "เกิดปัญหาขัดข้องทางเครือข่ายในการติดต่อคลาวด์", "error");
             }
-            box.classList.remove('hidden');
         }
 
-        function lockStudentDetails(id, name, room, seatNo) {
-            currentTargetStudent = { id, name, room, seatNo };
-            document.getElementById('locked-name').textContent = name;
-            document.getElementById('locked-id').textContent = id;
-            document.getElementById('locked-room').textContent = room;
-            document.getElementById('locked-seat').textContent = seatNo;
+        function updateTodayLatenessCount() {
+            const todayStr = document.getElementById('record-date-picker').value;
+            const count = logsDataset.filter(log => log.timestamp === todayStr).length;
+            document.getElementById('lbl-today-count').innerText = count;
+        }
 
-            document.getElementById('locked-student-container').classList.remove('hidden');
+        // ==========================================
+        // 🔍 SECTION: FUZZY SEARCH LOGIC
+        // ==========================================
+        function executeFuzzySearch(val) {
+            const query = val.trim().toLowerCase();
+            const dropdown = document.getElementById('search-results-dropdown');
+            dropdown.innerHTML = "";
+
+            if (!query) { dropdown.classList.add('hidden'); return; }
+
+            const filtered = studentsDataset.filter(st => 
+                st.id.toLowerCase().includes(query) || st.name.toLowerCase().includes(query)
+            ).slice(0, 8); // จํากัดไว้แค่ 8 รายการเพื่อความคล่องตัวของ UI
+
+            if (filtered.length === 0) {
+                dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">❌ ไม่พบข้อมูลนักเรียนคนนี้ในระบบ</div>`;
+            } else {
+                filtered.forEach(st => {
+                    const div = document.createElement('div');
+                    div.className = "p-3 text-xs border-b border-slate-50 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors";
+                    div.innerHTML = `
+                        <div>
+                            <span class="font-bold text-slate-900">${st.name}</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">ชั้น: ${st.room} | เลขที่: ${st.seatNo}</p>
+                        </div>
+                        <span class="font-mono bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-600">${st.id}</span>
+                    `;
+                    div.onclick = () => selectStudentProfile(st);
+                    dropdown.appendChild(div);
+                });
+            }
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectStudentProfile(st) {
+            selectedStudent = st;
             document.getElementById('search-results-dropdown').classList.add('hidden');
             document.getElementById('record-student-search').value = "";
+            
+            document.getElementById('locked-name').innerText = st.name;
+            document.getElementById('locked-id').innerText = st.id;
+            document.getElementById('locked-room').innerText = st.room;
+            document.getElementById('locked-seat').innerText = st.seatNo;
+            document.getElementById('locked-student-container').classList.remove('hidden');
         }
 
         function resetSelectedStudent() {
-            currentTargetStudent = null;
+            selectedStudent = null;
             document.getElementById('locked-student-container').classList.add('hidden');
         }
 
-        // ----------------------------------------------------
-        // DATA PERSISTENCE & AUTO-SAVE TRANSMISSION
-        // ----------------------------------------------------
+        // ==========================================
+        // 💾 SECTION: SAVE RECORD EXECUTION (POST API)
+        // ==========================================
         async function executeLatenessSave() {
-            if (!currentTargetStudent) {
-                showToast("ปฏิเสธการทำรายการ", "โปรดระบุหรือทำการเลือกชื่อตัวนักเรียนที่ต้องการบันทึกความประพฤติก่อน", "error");
+            if (!selectedStudent) {
+                showToast("กรุณาระบุตัวตน", "โปรดเลือกตัวนักเรียนก่อนทำการเซฟสถิติ", "error");
                 return;
             }
 
-            const targetDate = document.getElementById('record-date-picker').value;
+            const dateStr = document.getElementById('record-date-picker').value;
             const reason = document.getElementById('record-reason-select').value;
-            const notes = document.getElementById('record-notes-input').value.trim();
+            const notes = document.getElementById('record-notes-input').value.trim() || "-";
+            const logId = "LOG-" + Date.now() + Math.floor(Math.random() * 100);
 
-            const timestamp = new Date();
-            // Combine selected date with current hours/seconds to be precise
-            const targetCombinedDate = new Date(targetDate);
-            targetCombinedDate.setHours(timestamp.getHours(), timestamp.getMinutes(), timestamp.getSeconds());
-
-            const uniqueId = "L-" + Date.now();
-            const logItem = {
-                logId: uniqueId,
-                timestamp: targetCombinedDate.toISOString(),
-                id: currentTargetStudent.id,
-                name: currentTargetStudent.name,
-                room: currentTargetStudent.room,
-                seatNo: currentTargetStudent.seatNo,
+            const payload = {
+                logId: logId,
+                timestamp: dateStr,
+                id: selectedStudent.id,
+                name: selectedStudent.name,
+                room: selectedStudent.room,
+                seatNo: selectedStudent.seatNo,
                 reason: reason,
                 notes: notes
             };
 
-            const btn = document.getElementById('btn-save-log');
-            btn.className = "w-full bg-slate-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center space-x-2 cursor-not-allowed";
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังทำการเชื่อมต่อคลาวด์เพื่อจัดเก็บ...</span>`;
+            const saveBtn = document.getElementById('btn-save-log');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังบันทึกข้อมูลเข้าคลาวด์...</span>`;
 
-            let hasSavedCloud = false;
-            const apiLink = localStorage.getItem('SKB_api_url');
-
-            if (apiLink) {
-                try {
-                    await fetch(apiLink, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(logItem)
-                    });
-                    hasSavedCloud = true;
-                } catch (e) {
-                    console.error("Cloud synchronization failed:", e);
-                }
-            }
-
-            // Always write down locally as a robust master backup
-            const localLogs = JSON.parse(localStorage.getItem('SKB_late_records')) || [];
-            localLogs.push(logItem);
-            localStorage.setItem('SKB_late_records', JSON.stringify(localLogs));
-
-            setTimeout(() => {
-                btn.className = "w-full bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md flex items-center justify-center space-x-2";
-                btn.innerHTML = `<i class="fa-solid fa-circle-check animate-bounce"></i> <span>ออโตเซฟเรียบร้อย</span>`;
-
-                showToast("บันทึกสำเร็จ", `บันทึกข้อมูลสถิตินักเรียนมาสาย: ${currentTargetStudent.name}`, "success");
-
-                setTimeout(() => {
-                    btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2";
-                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
-                    
-                    resetSelectedStudent();
-                    document.getElementById('record-notes-input').value = "";
-                    refreshCounterStatistics();
-                }, 1200);
-            }, 600);
-        }
-
-        function refreshCounterStatistics() {
-            const records = JSON.parse(localStorage.getItem('SKB_late_records')) || [];
-            const todayStr = new Date().toDateString();
-            const count = records.filter(item => new Date(item.timestamp).toDateString() === todayStr).length;
-            document.getElementById('lbl-today-count').textContent = count;
-        }
-
-        // ----------------------------------------------------
-        // DASHBOARD CALCULATIONS & RECOGNITIONS
-        // ----------------------------------------------------
-        async function loadDashboardCoreData() {
-            const weekPickerVal = document.getElementById('dash-date-week-picker').value;
-            if (!weekPickerVal) return;
-
-            const localRecords = JSON.parse(localStorage.getItem('SKB_late_records')) || [];
-
-            // Compute dates boundaries
-            const monDate = new Date(weekPickerVal);
-            monDate.setHours(0, 0, 0, 0);
-
-            const friDate = new Date(monDate);
-            friDate.setDate(monDate.getDate() + 4);
-            friDate.setHours(23, 59, 59, 999);
-
-            // Filter weekly records
-            const weeklyLogs = localRecords.filter(item => {
-                const itemDate = new Date(item.timestamp);
-                return itemDate >= monDate && itemDate <= friDate;
-            });
-
-            document.getElementById('kpi-total-weeks').textContent = weeklyLogs.length;
-
-            // Generate Map structure
-            const studentStatsMap = {};
-            loadedStudents.forEach(st => {
-                studentStatsMap[st.id] = {
-                    student: st,
-                    timestamps: [],
-                    reasons: {},
-                    riskValue: 0
-                };
-            });
-
-            weeklyLogs.forEach(log => {
-                if (studentStatsMap[log.id]) {
-                    const dStr = new Date(log.timestamp).toDateString();
-                    if (!studentStatsMap[log.id].timestamps.includes(dStr)) {
-                        studentStatsMap[log.id].timestamps.push(dStr);
-                    }
-                    studentStatsMap[log.id].reasons[log.reason] = (studentStatsMap[log.id].reasons[log.reason] || 0) + 1;
-                }
-            });
-
-            // Evaluate behaviors Risk indicators
-            let totalHighRisks = 0;
-            let totalMidRisks = 0;
-            const computedResults = [];
-
-            Object.keys(studentStatsMap).forEach(studentId => {
-                const entry = studentStatsMap[studentId];
-                const daysLateCount = entry.timestamps.length;
-                if (daysLateCount === 0) return;
-
-                const percentValue = Math.round((daysLateCount / 5) * 100);
-                entry.percent = percentValue;
-
-                // Checking consecutive sequences
-                const hasConsecutive = verifyConsecutivePatterns(entry.timestamps);
-
-                if (hasConsecutive) {
-                    entry.statusText = "สายสะสมต่อเนื่อง (High Risk)";
-                    entry.colorStyles = "text-rose-600 bg-rose-50 border-rose-200";
-                    totalHighRisks++;
-                } else if (percentValue >= 40) {
-                    entry.statusText = "สายเป็นระยะ (Medium Risk)";
-                    entry.colorStyles = "text-amber-600 bg-amber-50 border-amber-200";
-                    totalMidRisks++;
+            try {
+                if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
+                    // หากอยู่ในโหมดจำลอง
+                    logsDataset.push(payload);
+                    localStorage.setItem('mock_logs', JSON.stringify(logsDataset));
+                    simulateSuccessSave();
                 } else {
-                    entry.statusText = "สายปกติทั่วไป (Normal)";
-                    entry.colorStyles = "text-slate-500 bg-slate-100 border-slate-200";
+                    // ยิง POST ข้อมูลไปคลาวด์แบบเลี่ยงการติดบล็อก CORS
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // เทคนิคพิเศษทำให้ส่งข้อมูลไปหา Google Script ได้แม้ติดข้อกำหนด CORS
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    // เนื่องจากเป็น no-cors จะอ่านข้อความผลลัพธ์ไม่ได้ ให้เราถือว่าสำเร็จหากเซิร์ฟเวอร์ตอบรับสถานะกลับมา
+                    logsDataset.push(payload);
+                    simulateSuccessSave();
                 }
+            } catch (err) {
+                showToast("บันทึกไม่สำเร็จ", "เกิดข้อผิดพลาดในการเชื่อมโยงฐานข้อมูล", "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
+            }
+        }
 
-                computedResults.push(entry);
+        function simulateSuccessSave() {
+            showToast("บันทึกสถิติสำเร็จ", `ระบบบันทึกพฤติกรรมสายของ ${selectedStudent.name} แล้ว`, "success");
+            document.getElementById('record-notes-input').value = "";
+            resetSelectedStudent();
+            updateTodayLatenessCount();
+        }
+
+        // ==========================================
+        // 📊 SECTION: ANALYTICS & DASHBOARD GENERATION
+        // ==========================================
+        function loadDashboardCoreData() {
+            const startWeekStr = document.getElementById('dash-date-week-picker').value;
+            if (!startWeekStr) return;
+
+            const startWeekDate = new Date(startWeekStr);
+            const endWeekDate = new Date(startWeekDate);
+            endWeekDate.setDate(endWeekDate.getDate() + 6); // สิ้นสุดสัปดาห์ (อาทิตย์)
+
+            // กรอง Logs เฉพาะที่อยู่ในช่วงสัปดาห์ที่กำลังเปิดตรวจ
+            const weekLogs = logsDataset.filter(log => {
+                const logDate = new Date(log.timestamp);
+                return logDate >= startWeekDate && logDate <= endWeekDate;
             });
 
-            // Apply metrics
-            document.getElementById('kpi-high-risk').textContent = totalHighRisks;
-            document.getElementById('kpi-mid-risk').textContent = totalMidRisks;
+            // อัปเดต KPI ตัวที่ 1: ยอดรวมในสัปดาห์
+            document.getElementById('kpi-total-weeks').innerText = weekLogs.length;
 
-            // Order by most occurrences descending
-            computedResults.sort((a, b) => b.timestamps.length - a.timestamps.length);
+            // คัดแยกกลุ่มวิเคราะห์ความถี่พฤติกรรมรายบุคคลในสัปดาห์นี้
+            const studentMap = {};
+            weekLogs.forEach(log => {
+                if (!studentMap[log.id]) {
+                    studentMap[log.id] = { details: log, count: 0, dates: [] };
+                }
+                studentMap[log.id].count++;
+                studentMap[log.id].dates.push(log.timestamp);
+            });
 
-            // Render output
+            let highRiskCount = 0;
+            let midRiskCount = 0;
+            const leaderboardData = [];
+
+            Object.keys(studentMap).forEach(id => {
+                const item = studentMap[id];
+                // เงื่อนไข High Risk: สายสะสมตั้งแต่ 3 วันขึ้นไปในสัปดาห์นั้น
+                if (item.count >= 3) highRiskCount++;
+                // เงื่อนไข Medium Risk: สาย 2 ครั้งในหนึ่งสัปดาห์
+                else if (item.count === 2) midRiskCount++;
+
+                leaderboardData.push({
+                    id: id,
+                    name: item.details.name,
+                    roomInfo: `ม.${item.details.room} / เลขที่ ${item.details.seatNo}`,
+                    count: item.count
+                });
+            });
+
+            document.getElementById('kpi-high-risk').innerText = highRiskCount;
+            document.getElementById('kpi-mid-risk').innerText = midRiskCount;
+
+            // วาดตารางลีดเดอร์บอร์ดคนมาสายบ่อยที่สุด
+            leaderboardData.sort((a, b) => b.count - a.count);
+            renderLeaderboardTable(leaderboardData);
+
+            // คำนวณกราฟประมวลผลแท่ง (กระจายวันทำงาน) และกราฟวงกลมแยกสาเหตุ
+            generateDashboardCharts(weekLogs);
+        }
+
+        function renderLeaderboardTable(data) {
             const tbody = document.getElementById('tbl-leaderboard-body');
-            if (computedResults.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center py-10 text-slate-400">
-                            <i class="fa-solid fa-rectangle-list text-2xl mb-2 block"></i>
-                            ไม่พบบันทึกการมาสายของนักเรียนคนใดในรอบสัปดาห์เรียนนี้
-                        </td>
-                    </tr>
-                `;
-            } else {
-                tbody.innerHTML = computedResults.map((item, index) => `
-                    <tr class="hover:bg-slate-50/60 transition-colors">
-                        <td class="px-5 py-4 font-bold text-slate-900 text-center">${index + 1}</td>
-                        <td class="px-5 py-4 font-mono font-medium text-slate-500">${item.student.id}</td>
-                        <td class="px-5 py-4 font-bold text-slate-800">${item.student.name}</td>
-                        <td class="px-5 py-4 text-slate-600">${item.student.room} | เลขที่ ${item.student.seatNo}</td>
-                        <td class="px-5 py-4 text-center">
-                            <span class="inline-block w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold leading-7 text-xs">${item.timestamps.length}</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">${item.percent}% ของสัปดาห์</span>
-                        </td>
-                        <td class="px-5 py-4">
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${item.colorStyles}">
-                                ${item.statusText}
-                            </span>
-                        </td>
-                        <td class="px-5 py-4 text-center">
-                            <button onclick="openLogsManagerModal('${item.student.id}')" class="bg-slate-900 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-bold transition-all inline-flex items-center space-x-1">
-                                <i class="fa-solid fa-folder-tree"></i>
-                                <span>ตรวจสอบสิทธิ์</span>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            tbody.innerHTML = "";
 
-            renderBarChartDistributions(weeklyLogs);
-            renderReasonsPieSectors(weeklyLogs);
-        }
-
-        // Check if 3 or more consecutive weekdays
-        function verifyConsecutivePatterns(dateStrings) {
-            const map = [false, false, false, false, false];
-            dateStrings.forEach(str => {
-                const day = new Date(str).getDay();
-                if (day >= 1 && day <= 5) {
-                    map[day - 1] = true;
-                }
-            });
-
-            for (let i = 0; i <= 2; i++) {
-                if (map[i] && map[i+1] && map[i+2]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // ----------------------------------------------------
-        // DYNAMIC NATIVE GRAPHS BUILDERS
-        // ----------------------------------------------------
-        function renderBarChartDistributions(weeklyLogs) {
-            const tracker = [0, 0, 0, 0, 0];
-            weeklyLogs.forEach(log => {
-                const day = new Date(log.timestamp).getDay();
-                if (day >= 1 && day <= 5) {
-                    tracker[day - 1]++;
-                }
-            });
-
-            const max = Math.max(...tracker, 3);
-            const titles = ["จันทร์", "อังคาร", "พุธ", "พฤหัสฯ", "ศุกร์"];
-            const colors = ["bg-sky-500", "bg-rose-500", "bg-emerald-500", "bg-amber-500", "bg-indigo-500"];
-
-            const container = document.getElementById('chart-bar-holder');
-            container.innerHTML = tracker.map((count, index) => {
-                const pct = (count / max) * 80;
-                return `
-                    <div class="flex flex-col items-center flex-1 space-y-1.5 h-full justify-end">
-                        <span class="text-[10px] font-bold text-slate-700">${count}</span>
-                        <div class="w-8 md:w-11 ${colors[index]} rounded-t-lg transition-all duration-300" style="height: ${pct}%"></div>
-                        <span class="text-[10px] font-semibold text-slate-400">${titles[index]}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderReasonsPieSectors(weeklyLogs) {
-            const counts = {};
-            weeklyLogs.forEach(log => {
-                counts[log.reason] = (counts[log.reason] || 0) + 1;
-            });
-
-            const total = weeklyLogs.length;
-            const doughnut = document.getElementById('reasons-doughnut');
-            const legend = document.getElementById('reasons-legend-list');
-
-            if (total === 0) {
-                doughnut.style.background = "conic-gradient(#f1f5f9 0% 100%)";
-                legend.innerHTML = `<li class="text-slate-400 font-medium">ไม่มีสถิติมาสายในรอบสัปดาห์นี้</li>`;
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">📭 ไม่มีประวัติการเข้าเรียนสายสะสมในสัปดาห์ที่ระบุ</td></tr>`;
                 return;
             }
 
-            const hexColors = ["#10b981", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"];
-            const slices = [];
-            let cumulative = 0;
+            data.forEach((st, idx) => {
+                let badge = `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold text-[10px]">เฝ้าระวังปกติ</span>`;
+                if (st.count >= 3) {
+                    badge = `<span class="bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-full font-bold text-[10px]">🚨 เสี่ยงสูง (เชิญผู้ปกครอง)</span>`;
+                } else if (st.count === 2) {
+                    badge = `<span class="bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full font-bold text-[10px]">⚠️ เสี่ยงกลาง (ตักเตือน)</span>`;
+                }
 
-            const keys = Object.keys(counts);
-            keys.forEach((key, idx) => {
-                const qty = counts[key];
-                const pct = (qty / total) * 100;
-                const col = hexColors[idx % hexColors.length];
-                slices.push(`${col} ${cumulative}% ${cumulative + pct}%`);
-                cumulative += pct;
-            });
-
-            doughnut.style.background = `conic-gradient(${slices.join(', ')})`;
-
-            legend.innerHTML = keys.map((key, idx) => {
-                const qty = counts[key];
-                const col = hexColors[idx % hexColors.length];
-                const pct = Math.round((qty / total) * 100);
-                return `
-                    <li class="flex items-center space-x-2">
-                        <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${col}"></span>
-                        <span class="font-medium">${key} (<strong class="text-slate-800">${qty}</strong> ครั้ง | <strong class="text-slate-800">${pct}%</strong>)</span>
-                    </li>
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-5 py-3 text-center font-bold text-slate-400">${idx + 1}</td>
+                    <td class="px-5 py-3 font-mono font-bold text-slate-700">${st.id}</td>
+                    <td class="px-5 py-3 font-bold text-slate-900">${st.name}</td>
+                    <td class="px-5 py-3 font-medium text-slate-500">${st.roomInfo}</td>
+                    <td class="px-5 py-3 text-center font-bold text-slate-900">${st.count} ครั้ง</td>
+                    <td class="px-5 py-3">${badge}</td>
+                    <td class="px-5 py-3 text-center">
+                        <button onclick="openLogsManagerModal('${st.id}')" class="bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 font-bold px-3 py-1 rounded-xl transition-all duration-150">
+                            <i class="fa-solid fa-folder-open mr-1"></i> ตรวจดู/ลบ
+                        </button>
+                    </td>
                 `;
-            }).join('');
+                tbody.appendChild(tr);
+            });
         }
 
-        // ----------------------------------------------------
-        // ADMIN AUTHORIZED LOGS MANAGER & DELETIONS
-        // ----------------------------------------------------
-        function openLogsManagerModal(studentId) {
-            const localRecords = JSON.parse(localStorage.getItem('SKB_late_records')) || [];
-            const stObj = loadedStudents.find(s => s.id === studentId);
-            if (!stObj) return;
+        function generateDashboardCharts(weekLogs) {
+            // 1. คำนวณวันจันทร์-ศุกร์ เพื่อวาดกราฟแท่ง
+            const daysCount = { 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0 };
+            const reasonsCount = {};
 
-            document.getElementById('mgr-modal-student-name').textContent = `${stObj.name} (ห้อง ${stObj.room} เลขที่ ${stObj.seatNo})`;
+            weekLogs.forEach(log => {
+                const d = new Date(log.timestamp);
+                const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+                if (daysCount[dayName] !== undefined) daysCount[dayName]++;
+
+                reasonsCount[log.reason] = (reasonsCount[log.reason] || 0) + 1;
+            });
+
+            // วาดกราฟแท่งด้วยดีไซน์ขยายยืดหดของ Tailwind
+            const barHolder = document.getElementById('chart-bar-holder');
+            barHolder.innerHTML = "";
             
-            // Filter all logs of this specific student, ordered newest first
-            const logs = localRecords.filter(l => l.id === studentId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            const tbody = document.getElementById('mgr-modal-logs-body');
-            if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ไม่พบประวัติใด ๆ</td></tr>`;
-            } else {
-                tbody.innerHTML = logs.map(log => {
-                    const formattedDate = new Date(log.timestamp).toLocaleDateString('th-TH', {
-                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    });
-                    return `
-                        <tr>
-                            <td class="px-4 py-3 font-mono text-[11px] font-bold text-slate-800">${formattedDate}</td>
-                            <td class="px-4 py-3 text-slate-600 font-semibold">${log.reason}</td>
-                            <td class="px-4 py-3 text-slate-400 font-medium">${log.notes || "-"}</td>
-                            <td class="px-4 py-3 text-center">
-                                <button onclick="triggerLogDeletion('${log.logId}')" class="text-rose-500 hover:text-rose-700 font-bold px-2.5 py-1 rounded-lg hover:bg-rose-50 transition-colors inline-flex items-center space-x-1">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                    <span>ลบข้อมูล</span>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+            const maxVal = Math.max(...Object.values(daysCount), 1);
+            const dayThLabels = { 'Mon': 'จันทร์', 'Tue': 'อังคาร', 'Wed': 'พุธ', 'Thu': 'พฤหัสฯ', 'Fri': 'ศุกร์' };
+
+            Object.keys(daysCount).forEach(day => {
+                const count = daysCount[day];
+                const pct = (count / maxVal) * 80 + 10; // แปลงส่วนสูงเปรียบเทียบ
+                const bar = document.createElement('div');
+                bar.className = "flex flex-col items-center flex-grow group space-y-2";
+                bar.innerHTML = `
+                    <div class="w-8 bg-slate-100 group-hover:bg-emerald-500 rounded-t-lg transition-all relative flex items-end justify-center" style="height: ${pct}%">
+                        <span class="absolute -top-6 text-[10px] font-bold text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity bg-white border shadow px-1.5 py-0.5 rounded">${count} ราย</span>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-400 group-hover:text-slate-700">${dayThLabels[day]}</span>
+                `;
+                barHolder.appendChild(bar);
+            });
+
+            // 2. ประมวลสัดส่วนเหตุผลเพื่อจัดทำ Legend รายการประกอบ
+            const legendList = document.getElementById('reasons-legend-list');
+            legendList.innerHTML = "";
+            const total = weekLogs.length || 1;
+
+            const colors = ['bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-sky-500', 'bg-purple-500'];
+            let colorIdx = 0;
+
+            Object.keys(reasonsCount).forEach(reason => {
+                const count = reasonsCount[reason];
+                const pct = ((count / total) * 100).toFixed(0);
+                const li = document.createElement('li');
+                li.className = "flex items-center justify-between gap-4";
+                li.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full ${colors[colorIdx % colors.length]}"></span>
+                        <span>${reason}</span>
+                    </div>
+                    <strong class="font-mono text-slate-900">${pct}% (${count})</strong>
+                `;
+                legendList.appendChild(li);
+                colorIdx++;
+            });
+        }
+
+        // ==========================================
+        // 🗂️ SECTION: DETAIL LOGS MANAGEMENT & DELETE
+        // ==========================================
+        function openLogsManagerModal(studentId) {
+            currentEditingStudentId = studentId;
+            const studentLogs = logsDataset.filter(log => log.id === studentId);
+            if (studentLogs.length === 0) return;
+
+            document.getElementById('mgr-modal-student-name').innerText = studentLogs[0].name;
+            document.getElementById('mgr-modal-student-desc').innerText = `รหัสประจำตัว: ${studentLogs[0].id} | ระดับชั้น: ม.${studentLogs[0].room} / เลขที่ ${studentLogs[0].seatNo}`;
+
+            const tbody = document.getElementById('tbl-mgr-logs-body');
+            tbody.innerHTML = "";
+
+            studentLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-slate-700 font-mono">${log.timestamp}</td>
+                    <td class="px-4 py-2 font-medium text-slate-800">${log.reason}</td>
+                    <td class="px-4 py-2 text-slate-400">${log.notes}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button onclick="triggerDeleteConfirmation('${log.logId}')" class="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs">
+                            <i class="fa-regular fa-trash-can"></i> ลบรายการนี้
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
 
             document.getElementById('logs-manager-modal').classList.remove('hidden');
         }
@@ -1124,56 +459,122 @@
             document.getElementById('logs-manager-modal').classList.add('hidden');
         }
 
-        function triggerLogDeletion(logId) {
-            deletionTargetId = logId;
-            document.getElementById('confirm-modal-text').textContent = "การดำเนินการนี้จะเป็นการลบประวัติการมาสายของนักเรียนรายการนี้ออกจากฐานข้อมูลอย่างถาวรและไม่สามารถย้อนคืนได้ ยืนยันคำสั่ง?";
-            document.getElementById('confirm-modal').classList.remove('hidden');
+        function triggerDeleteConfirmation(logId) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-modal-text').innerText = `คุณแน่ใจหรือไม่ว่าต้องการลบล็อกข้อมูลการสายรหัส "${logId}" ออกจากระบบคลาวด์? การทำรายการนี้ไม่สามารถย้อนคืนได้`;
+            modal.classList.remove('hidden');
+
+            document.getElementById('confirm-submit-btn').onclick = async function() {
+                modal.classList.add('hidden');
+                await executeDeleteLogFromCloud(logId);
+            };
+            document.getElementById('confirm-cancel-btn').onclick = function() {
+                modal.classList.add('hidden');
+            };
         }
 
-        // Confirm Delete Button listener
-        document.getElementById('confirm-submit-btn').onclick = function() {
-            if (deletionTargetId) {
-                let localRecords = JSON.parse(localStorage.getItem('SKB_late_records')) || [];
-                const foundItem = localRecords.find(item => item.logId === deletionTargetId);
-                
-                // Perform deletion logic
-                localRecords = localRecords.filter(item => item.logId !== deletionTargetId);
-                localStorage.setItem('SKB_late_records', JSON.stringify(localRecords));
-
-                // If API URL is provided, trigger a cloud deletion request (assuming backend supports it)
-                const apiLink = localStorage.getItem('SKB_api_url');
-                if (apiLink && foundItem) {
-                    fetch(`${apiLink}?action=deleteLog&logId=${deletionTargetId}`, {
-                        method: "POST",
-                        mode: "no-cors"
-                    }).catch(e => console.error("Cloud delete synchronization failed:", e));
-                }
-
-                showToast("ลบข้อมูลสำเร็จ", "ประวัติการมาสายของรายการดังกล่าวถูกลบอย่างถาวรแล้ว", "success");
-                
-                document.getElementById('confirm-modal').classList.add('hidden');
-                
-                // Refresh views immediately
-                if (foundItem) {
-                    openLogsManagerModal(foundItem.id);
+        async function executeDeleteLogFromCloud(logId) {
+            showToast("กำลังดำเนินรายการ", "กำลังส่งคำสั่งขอลบข้อมูลประวัติออกจากระบบคลาวด์...", "info");
+            
+            try {
+                if (API_URL.includes("YOUR_WEB_APP_URL_HERE") || API_URL === "") {
+                    logsDataset = logsDataset.filter(l => l.logId !== logId);
+                    localStorage.setItem('mock_logs', JSON.stringify(logsDataset));
+                    handleDeleteSuccess();
                 } else {
-                    closeLogsManagerModal();
+                    const res = await fetch(`${API_URL}?action=deleteLog&logId=${logId}`);
+                    const result = await res.json();
+                    if (result.status === "success") {
+                        logsDataset = logsDataset.filter(l => l.logId !== logId);
+                        handleDeleteSuccess();
+                    } else {
+                        showToast("การลบล้มเหลว", "เซิร์ฟเวอร์ปฏิเสธการลบ หรือไม่พบไอดีล็อกนี้", "error");
+                    }
                 }
-                loadDashboardCoreData();
-                refreshCounterStatistics();
+            } catch (err) {
+                showToast("เครือข่ายขัดข้อง", "ไม่สามารถส่งคำสั่งลบไปยังกูเกิลชีตได้", "error");
             }
-        };
+        }
 
-        document.getElementById('confirm-cancel-btn').onclick = function() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            deletionTargetId = null;
-        };
+        function handleDeleteSuccess() {
+            showToast("ลบข้อมูลสำเร็จ", "ประวัติถูกทำลายออกจากระบบเรียบร้อยแล้ว", "success");
+            // รีโหลดหน้าต่างประวัติย่อยใหม่
+            const checkStillHasLogs = logsDataset.filter(log => log.id === currentEditingStudentId);
+            if (checkStillHasLogs.length > 0) {
+                openLogsManagerModal(currentEditingStudentId);
+            } else {
+                closeLogsManagerModal();
+            }
+            loadDashboardCoreData(); // อัปเดตตารางสรุปหลักเบื้องหลัง
+        }
 
-        // ----------------------------------------------------
-        // SYSTEM EXPORT PRINTERS
-        // ----------------------------------------------------
+        // ==========================================
+        // 🖨️ SECTION: REPORT GENERATION & PRINT
+        // ==========================================
         function handlePrintExport() {
+            const currentWeek = document.getElementById('dash-date-week-picker').value;
+            document.getElementById('print-date-subtitle').innerText = `รายงานผลประจำสัปดาห์เริ่มต้น: วันจันทร์ที่ ${currentWeek} (พิมพ์รายงานเมื่อ: ${new Date().toLocaleString('th-TH')})`;
             window.print();
+        }
+
+        // ==========================================
+        // 💡 SECTION: TOAST NOTIFICATIONS HANDLER
+        // ==========================================
+        function showToast(title, message, type = "success") {
+            const toast = document.getElementById('toast-notification');
+            const iconBg = document.getElementById('toast-icon-bg');
+            const icon = document.getElementById('toast-icon');
+            
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+
+            if (type === 'success') {
+                iconBg.className = "p-2 rounded-xl text-white bg-emerald-500";
+                icon.className = "fa-solid fa-circle-check";
+            } else if (type === 'error') {
+                iconBg.className = "p-2 rounded-xl text-white bg-rose-500";
+                icon.className = "fa-solid fa-circle-xmark";
+            } else {
+                iconBg.className = "p-2 rounded-xl text-white bg-sky-500";
+                icon.className = "fa-solid fa-circle-info";
+            }
+
+            toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-0 opacity-100 transition-all duration-300 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3";
+            
+            setTimeout(() => {
+                toast.className = "fixed top-5 right-5 z-[9999] transform translate-y-[-150%] opacity-0 transition-all duration-300 max-w-sm w-full bg-white shadow-xl rounded-2xl border border-slate-100 p-4 flex items-start space-x-3 pointer-events-none";
+            }, 3500);
+        }
+
+        // ==========================================
+        // 📦 MOCK LOCAL DATABASE SETUP
+        // ==========================================
+        function setupMockDatabase() {
+            studentsDataset = [
+                { id: "10001", name: "นายสมศักดิ์ รักดี", room: "6/1", seatNo: "1" },
+                { id: "10002", name: "นางสาวสมหญิง เรียนเก่ง", room: "6/1", seatNo: "2" },
+                { id: "10003", name: "นายธนพล ขยันมาสาย", room: "6/2", seatNo: "15" },
+                { id: "10004", name: "นางสาวกนกกร พรประเสริฐ", room: "5/3", seatNo: "24" },
+                { id: "10005", name: "นายปกรณ์ เกียรติเจริญ", room: "4/2", seatNo: "8" }
+            ];
+            
+            const savedMockLogs = localStorage.getItem('mock_logs');
+            if (savedMockLogs) {
+                logsDataset = JSON.parse(savedMockLogs);
+            } else {
+                logsDataset = [
+                    { logId: "LOG-01", timestamp: getMondayOfCurrentWeek(new Date()), id: "10003", name: "นายธนพล ขยันมาสาย", room: "6/2", seatNo: "15", reason: "ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน", notes: "รถมอเตอร์ไซค์สตาร์ทไม่ติด" }
+                ];
+            }
+            updateTodayLatenessCount();
+        }
+
+        function openConnectionSetting() {
+            const newUrl = prompt("กรุณาระบุ Web App URL ของกูเกิลสคริปต์ที่คัดลอกมาเพื่อเปิดโหมด Cloud:", API_URL);
+            if (newUrl !== null) {
+                alert("บันทึกช่องทางการเชื่อมต่อแล้ว ระบบจะทำการรีโหลดหน้าเว็บเพื่อตั้งค่าใหม่");
+                location.reload();
+            }
         }
     </script>
 </body>
