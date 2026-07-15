@@ -166,7 +166,7 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 2cm 1.5cm; 
+                margin: 1.8cm 1.5cm; 
             }
             body {
                 background: white !important;
@@ -177,6 +177,8 @@
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                /* ฟอนต์เอกสารราชการไทย: ถ้าเครื่อง/เครื่องพิมพ์มี TH Sarabun New หรือ TH SarabunPSK ติดตั้งไว้ (ปกติมีอยู่แล้วในคอมพิวเตอร์ราชการ/โรงเรียนไทยส่วนใหญ่ที่ลง Microsoft Office) จะใช้ฟอนต์นั้นเป๊ะๆ ถ้าไม่มีจะ fallback ไปที่ Sarabun (Google Font ที่ใกล้เคียงที่สุด) */
+                font-family: 'TH Sarabun New', 'TH SarabunPSK', 'Sarabun', sans-serif !important;
             }
             /* ซ่อนเมนูระบบ ล็อกอิน ฟุตเตอร์ และแผงควบคุมทั้งหมดที่ไม่เกี่ยวกับการจัดพิมพ์ */
             header, nav, footer, #sec-login-gate, #connection-status-badge, #sec-tab-record, #toast-notification, #confirm-modal, #logs-manager-modal {
@@ -222,26 +224,64 @@
             .overflow-x-auto {
                 overflow: visible !important;
             }
+
+            /* 🖨️ ตารางแบบคอลัมน์ตายตัว กันไม่ให้ข้อความดันขนาดคอลัมน์จนรูปทรงเพี้ยน/กระเด็นข้ามหน้า */
             table {
                 width: 100% !important;
                 border-collapse: collapse !important;
+                table-layout: fixed !important;
+            }
+            /* ให้หัวตารางแสดงซ้ำทุกหน้าเมื่อตารางยาวเกิน 1 หน้ากระดาษ */
+            thead {
+                display: table-header-group !important;
+            }
+            tbody {
+                display: table-row-group !important;
             }
             th, td {
                 border: 1px solid #cbd5e1 !important;
-                padding: 8px 12px !important;
                 color: black !important;
-                font-size: 11pt !important;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                vertical-align: top;
             }
             th {
                 background-color: #f1f5f9 !important;
                 font-weight: bold !important;
             }
+            /* กำหนดความกว้างคอลัมน์ตายตัวให้เหมาะกับเนื้อหาแต่ละประเภท */
+            th:nth-child(1), td:nth-child(1) { width: 8%;  text-align: center; }
+            th:nth-child(2), td:nth-child(2) { width: 14%; }
+            th:nth-child(3), td:nth-child(3) { width: 28%; }
+            th:nth-child(4), td:nth-child(4) { width: 16%; }
+            th:nth-child(5), td:nth-child(5) { width: 12%; text-align: center; }
+            th:nth-child(6), td:nth-child(6) { width: 22%; }
             /* ซ่อนคอลัมน์ "สิทธิ์จัดการประวัติ" ของแอดมินตอนออกรายงาน */
             th:nth-child(7), td:nth-child(7) {
                 display: none !important;
             }
             tr { 
                 page-break-inside: avoid; 
+            }
+
+            /* 🌟 ระบบปรับขนาดตัวอักษร/ระยะห่างอัตโนมัติตามจำนวนแถว (auto-fit) ---------------- */
+            /* ค่าเริ่มต้น: ไม่เกิน 15 แถว ใช้ตัวอักษรขนาดปกติอ่านง่าย */
+            th, td { font-size: 13pt !important; padding: 7px 10px !important; }
+
+            /* 16-25 แถว: ย่อลงเล็กน้อย */
+            body.print-density-compact th, body.print-density-compact td {
+                font-size: 11.5pt !important;
+                padding: 5px 8px !important;
+            }
+            /* 26-40 แถว: ย่อลงอีก เพื่อให้อยู่ในหน้าจำนวนหน้าที่กระชับ */
+            body.print-density-tight th, body.print-density-tight td {
+                font-size: 10pt !important;
+                padding: 4px 6px !important;
+            }
+            /* มากกว่า 40 แถว: ย่อสุดแต่ยังอ่านได้สบายตา */
+            body.print-density-ultra th, body.print-density-ultra td {
+                font-size: 8.5pt !important;
+                padding: 3px 4px !important;
             }
         }
     </style>
@@ -363,7 +403,7 @@
                 <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200/60 max-w-xl mx-auto space-y-6">
                     <div class="text-center space-y-1 border-b border-slate-100 pb-4">
                         <h2 class="text-xl font-bold text-slate-900">บันทึกสถิติมาสาย</h2>
-                        <p class="text-xs text-slate-400">ระบุวันเรียนและค้นหารายชื่อนักเรียนเพื่อทำการลงบันทึกในระบบคลาวด์</p>
+                        <p class="text-xs text-slate-400">ระบุวันเรียน ค้นหา และเลือกนักเรียนได้หลายคนพร้อมกันก่อนบันทึกในระบบคลาวด์</p>
                     </div>
 
                     <div class="space-y-4">
@@ -378,7 +418,7 @@
 
                         <!-- Fuzzy Search Input Box -->
                         <div class="relative">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ค้นหาตัวตนนักเรียน</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ค้นหาและเลือกนักเรียน (เลือกได้หลายคน)</label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-magnifying-glass"></i></span>
                                 <input type="text" id="record-student-search" oninput="executeFuzzySearch(this.value)" placeholder="พิมพ์รหัส 5 หลัก หรือ ค้นหาชื่อภาษาไทย..." class="w-full pl-10 pr-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all shadow-sm" autocomplete="off" disabled>
@@ -390,27 +430,20 @@
                             </div>
                         </div>
 
-                        <!-- Locked Student Profile Visual Card -->
-                        <div id="locked-student-container" class="bg-slate-50 border border-slate-100 p-4 rounded-2xl hidden transition-all duration-200">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">ยืนยันระบุบุคคลเรียบร้อย</span>
-                                    <h3 id="locked-name" class="text-base font-bold text-slate-800 mt-2"></h3>
-                                    <p class="text-xs text-slate-500 mt-0.5 font-medium">
-                                        รหัสประจำตัว: <span id="locked-id" class="font-mono font-bold text-slate-700"></span> | 
-                                        ชั้นเรียน: <span id="locked-room" class="font-bold text-slate-700"></span> | 
-                                        เลขที่: <span id="locked-seat" class="font-bold text-slate-700"></span>
-                                    </p>
-                                </div>
-                                <button onclick="resetSelectedStudent()" class="text-slate-400 hover:text-rose-500 p-1 transition-colors">
-                                    <i class="fa-regular fa-circle-xmark text-lg"></i>
-                                </button>
+                        <!-- Selected Students Multi-Select List -->
+                        <div id="selected-students-container" class="bg-slate-50 border border-slate-100 p-4 rounded-2xl hidden transition-all duration-200 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">เลือกไว้แล้ว <span id="selected-count-badge">0</span> คน</span>
+                                <button onclick="clearAllSelectedStudents()" class="text-[11px] font-semibold text-slate-400 hover:text-rose-500 transition-colors">ล้างทั้งหมด</button>
+                            </div>
+                            <div id="selected-students-list" class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                                <!-- แต่ละนักเรียนที่เลือกจะถูกเติมเป็น chip ตรงนี้ -->
                             </div>
                         </div>
 
                         <!-- Dropdown Lateness Reasons -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">สาเหตุการมาสาย</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">สาเหตุการมาสาย <span class="normal-case font-medium text-slate-400">(ใช้ร่วมกันกับทุกคนที่เลือก)</span></label>
                             <select id="record-reason-select" class="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all bg-white">
                                 <option value="ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน">ตื่นสาย / ทำภารกิจส่วนตัวไม่ทัน</option>
                                 <option value="การจราจรติดขัด / รถโดยสารประจำทางล่าช้า">การจราจรติดขัด / รถโดยสารประจำทางล่าช้า</option>
@@ -429,7 +462,7 @@
                         <!-- Auto-Save Trigger Button -->
                         <button id="btn-save-log" onclick="executeLatenessSave()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>บันทึกข้อมูลแบบออโตเซฟ</span>
+                            <span id="btn-save-log-label">บันทึกข้อมูลแบบออโตเซฟ</span>
                         </button>
                     </div>
                 </div>
@@ -620,7 +653,7 @@
 
         let loadedStudents = []; // ไม่มีข้อมูลตัวอย่าง ดึงข้อมูลจริงจากคลาวด์เท่านั้น
         let loadedLogs = [];     // ไม่มีข้อมูลบันทึกตัวอย่าง ดึงข้อมูลจริงจากคลาวด์เท่านั้น
-        let currentTargetStudent = null;
+        let selectedStudents = [];
         let activePortalTab = "record";
         let deletionTargetId = null;
 
@@ -670,6 +703,7 @@
 
         function handleSystemLogout() {
             localStorage.removeItem('SKB_auth_session');
+            clearAllSelectedStudents();
             showToast("ออกจากระบบ", "ตัดการเชื่อมต่อบัญชีและลบประวัติเซสชันเรียบร้อย", "info");
             verifyActiveSession();
         }
@@ -809,40 +843,82 @@
                     </div>
                 `;
             } else {
-                box.innerHTML = filtered.map(std => `
-                    <button onclick="lockStudentDetails('${std.id}', '${std.name}', '${std.room}', '${std.seatNo}')" class="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 flex justify-between items-center transition-colors">
+                box.innerHTML = filtered.map(std => {
+                    const isPicked = selectedStudents.some(s => String(s.id) === String(std.id));
+                    return `
+                    <button onclick="addStudentToSelection('${std.id}', '${std.name}', '${std.room}', '${std.seatNo}')" ${isPicked ? 'disabled' : ''} class="w-full text-left px-4 py-3 ${isPicked ? 'bg-emerald-50/60 cursor-not-allowed' : 'hover:bg-slate-50'} border-b border-slate-100 last:border-b-0 flex justify-between items-center transition-colors">
                         <div>
                             <p class="font-bold text-slate-800 text-xs">${std.name}</p>
                             <p class="text-[10px] text-slate-400 font-medium">รหัสประจำตัว: ${std.id} | ชั้นเรียน: ${std.room}</p>
                         </div>
-                        <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">เลขที่ ${std.seatNo}</span>
+                        ${isPicked
+                            ? `<span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-lg flex items-center gap-1"><i class="fa-solid fa-check"></i> เลือกแล้ว</span>`
+                            : `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">เลขที่ ${std.seatNo}</span>`
+                        }
                     </button>
-                `).join('');
+                `; }).join('');
             }
             box.classList.remove('hidden');
         }
 
-        function lockStudentDetails(id, name, room, seatNo) {
-            currentTargetStudent = { id, name, room, seatNo };
-            document.getElementById('locked-name').textContent = name;
-            document.getElementById('locked-id').textContent = id;
-            document.getElementById('locked-room').textContent = room;
-            document.getElementById('locked-seat').textContent = seatNo;
+        // 🌟 MULTI-SELECT: เพิ่มนักเรียนเข้ารายชื่อที่จะบันทึก (เลือกได้หลายคนก่อนกดส่งครั้งเดียว)
+        function addStudentToSelection(id, name, room, seatNo) {
+            if (selectedStudents.some(s => String(s.id) === String(id))) {
+                showToast("เลือกซ้ำ", `${name} ถูกเลือกไว้ในรายการแล้ว`, "info");
+                return;
+            }
+            selectedStudents.push({ id, name, room, seatNo });
+            renderSelectedStudentsList();
 
-            document.getElementById('locked-student-container').classList.remove('hidden');
             document.getElementById('search-results-dropdown').classList.add('hidden');
             document.getElementById('record-student-search').value = "";
+            document.getElementById('record-student-search').focus();
         }
 
-        function resetSelectedStudent() {
-            currentTargetStudent = null;
-            document.getElementById('locked-student-container').classList.add('hidden');
+        function removeStudentFromSelection(id) {
+            selectedStudents = selectedStudents.filter(s => String(s.id) !== String(id));
+            renderSelectedStudentsList();
         }
 
-        // DATA PERSISTENCE & AUTO-SAVE TRANSMISSION
+        function clearAllSelectedStudents() {
+            selectedStudents = [];
+            renderSelectedStudentsList();
+        }
+
+        function renderSelectedStudentsList() {
+            const container = document.getElementById('selected-students-container');
+            const list = document.getElementById('selected-students-list');
+            const badge = document.getElementById('selected-count-badge');
+            const btnLabel = document.getElementById('btn-save-log-label');
+
+            badge.textContent = selectedStudents.length;
+
+            if (selectedStudents.length === 0) {
+                container.classList.add('hidden');
+                btnLabel.textContent = "บันทึกข้อมูลแบบออโตเซฟ";
+                return;
+            }
+
+            container.classList.remove('hidden');
+            btnLabel.textContent = `บันทึกข้อมูลทั้งหมด (${selectedStudents.length} คน)`;
+
+            list.innerHTML = selectedStudents.map(s => `
+                <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-3 py-2 skb-anim-in-fast">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-slate-800 truncate">${s.name}</p>
+                        <p class="text-[10px] text-slate-400 font-medium">รหัส ${s.id} | ${s.room} | เลขที่ ${s.seatNo}</p>
+                    </div>
+                    <button onclick="removeStudentFromSelection('${s.id}')" class="text-slate-400 hover:text-rose-500 p-1 transition-colors shrink-0">
+                        <i class="fa-regular fa-circle-xmark text-base"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // DATA PERSISTENCE & AUTO-SAVE TRANSMISSION (รองรับส่งหลายคนพร้อมกันในครั้งเดียว)
         async function executeLatenessSave() {
-            if (!currentTargetStudent) {
-                showToast("ปฏิเสธการทำรายการ", "โปรดค้นหาและทำการเลือกชื่อตัวนักเรียนที่ต้องการบันทึกก่อน", "error");
+            if (selectedStudents.length === 0) {
+                showToast("ปฏิเสธการทำรายการ", "โปรดค้นหาและเลือกนักเรียนอย่างน้อย 1 คนก่อนบันทึก", "error");
                 return;
             }
 
@@ -850,13 +926,15 @@
             const reason = document.getElementById('record-reason-select').value;
             const notes = document.getElementById('record-notes-input').value.trim();
 
-            // 🛡️ ป้องกันการบันทึกซ้ำ: เช็คจากข้อมูลที่ซิงค์ล่าสุดว่านักเรียนคนนี้ถูกบันทึกในวันเดียวกันไปแล้วหรือยัง
-            const alreadyLogged = loadedLogs.some(l =>
-                String(l.id) === String(currentTargetStudent.id) &&
+            // 🛡️ ป้องกันการบันทึกซ้ำ: กรองเฉพาะคนที่ยังไม่มีประวัติของวันที่เลือกไว้ในระบบ
+            const duplicates = selectedStudents.filter(s => loadedLogs.some(l =>
+                String(l.id) === String(s.id) &&
                 new Date(l.timestamp).toDateString() === new Date(targetDate).toDateString()
-            );
-            if (alreadyLogged) {
-                showToast("มีบันทึกซ้ำ", `${currentTargetStudent.name} มีประวัติมาสายของวันที่เลือกอยู่แล้วในระบบ`, "error");
+            ));
+            const toSubmit = selectedStudents.filter(s => !duplicates.some(d => String(d.id) === String(s.id)));
+
+            if (toSubmit.length === 0) {
+                showToast("มีบันทึกซ้ำทั้งหมด", "นักเรียนที่เลือกมีประวัติมาสายของวันที่เลือกอยู่แล้วทุกคน", "error");
                 return;
             }
 
@@ -864,45 +942,47 @@
             const targetCombinedDate = new Date(targetDate);
             targetCombinedDate.setHours(timestamp.getHours(), timestamp.getMinutes(), timestamp.getSeconds());
 
-            const uniqueId = "L-" + Date.now();
-            const logItem = {
-                logId: uniqueId,
+            // สร้าง logId ไม่ให้ชนกันแม้ Date.now() จะตรงมิลลิวินาทีเดียวกัน (ใส่ index ต่อท้าย)
+            const logItems = toSubmit.map((s, idx) => ({
+                logId: `L-${Date.now()}-${idx}`,
                 timestamp: targetCombinedDate.toISOString(),
-                id: currentTargetStudent.id,
-                name: currentTargetStudent.name,
-                room: currentTargetStudent.room,
-                seatNo: currentTargetStudent.seatNo,
+                id: s.id,
+                name: s.name,
+                room: s.room,
+                seatNo: s.seatNo,
                 reason: reason,
                 notes: notes
-            };
+            }));
 
             const btn = document.getElementById('btn-save-log');
+            const btnLabel = document.getElementById('btn-save-log-label');
             btn.className = "w-full bg-slate-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center space-x-2 cursor-not-allowed";
-            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังเชื่อมต่อคลาวด์เพื่อจัดเก็บ...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>กำลังบันทึก ${logItems.length} รายการไปยังคลาวด์...</span>`;
 
             try {
+                // ส่งเป็น array ในคำขอเดียว — Apps Script เขียนทุกแถวในครั้งเดียว เร็วกว่าส่งทีละคนมาก
                 await fetch(API_URL, {
                     method: "POST",
                     mode: "no-cors",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(logItem)
+                    body: JSON.stringify(logItems)
                 });
 
                 // 🔄 ซิงค์ประวัติจริงจากคลาวด์ใหม่ทันที แทนการเชื่อใจข้อมูลฝั่งเบราว์เซอร์เฉย ๆ
-                // (เพราะ mode: "no-cors" ทำให้เราอ่านผลลัพธ์จริงจาก Apps Script ไม่ได้)
-                // วิธีนี้การันตีว่าตัวเลขที่แสดงบนหน้าเว็บตรงกับสิ่งที่อยู่ใน Sheet เสมอ
                 await refetchLogsOnly();
 
                 btn.className = "w-full bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md flex items-center justify-center space-x-2";
                 btn.innerHTML = `<i class="fa-solid fa-circle-check animate-bounce"></i> <span>ออโตเซฟเรียบร้อย</span>`;
 
-                showToast("บันทึกสำเร็จ", `บันทึกข้อมูลสถิตินักเรียนมาสาย: ${currentTargetStudent.name}`, "success");
+                const skipMsg = duplicates.length > 0 ? ` (ข้าม ${duplicates.length} คนที่มีประวัติซ้ำ)` : '';
+                showToast("บันทึกสำเร็จ", `บันทึกข้อมูลสถิตินักเรียนมาสาย ${logItems.length} คนแล้ว${skipMsg}`, "success");
 
                 setTimeout(() => {
-                    btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2";
-                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
-                    
-                    resetSelectedStudent();
+                    btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2";
+                    btnLabel.textContent = "บันทึกข้อมูลแบบออโตเซฟ";
+                    btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-log-label">บันทึกข้อมูลแบบออโตเซฟ</span>`;
+
+                    clearAllSelectedStudents();
                     document.getElementById('record-notes-input').value = "";
                     refreshCounterStatistics();
                 }, 1200);
@@ -910,8 +990,8 @@
             } catch (e) {
                 console.error("Save Error:", e);
                 showToast("บันทึกล้มเหลว", "ไม่สามารถส่งข้อมูลไปที่เซิร์ฟเวอร์หลักได้", "error");
-                btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2";
-                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>บันทึกข้อมูลแบบออโตเซฟ</span>`;
+                btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2";
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-log-label">บันทึกข้อมูลทั้งหมด (${selectedStudents.length} คน)</span>`;
             }
         }
 
@@ -1248,8 +1328,21 @@
             deletionTargetId = null;
         };
 
-        // EXPORT TO PDF PRINTER
+        // EXPORT TO PDF PRINTER (พร้อมระบบปรับขนาดตัวอักษรอัตโนมัติตามจำนวนแถว)
         function handlePrintExport() {
+            const tbody = document.getElementById('tbl-leaderboard-body');
+            const rowCount = tbody ? tbody.querySelectorAll('tr').length : 0;
+
+            document.body.classList.remove('print-density-compact', 'print-density-tight', 'print-density-ultra');
+            if (rowCount > 40) {
+                document.body.classList.add('print-density-ultra');
+            } else if (rowCount > 25) {
+                document.body.classList.add('print-density-tight');
+            } else if (rowCount > 15) {
+                document.body.classList.add('print-density-compact');
+            }
+            // ไม่เกิน 15 แถว: ไม่ต้องเติมคลาสใด ๆ ใช้ขนาดปกติ (13pt) ตามที่กำหนดไว้ใน @media print
+
             window.print();
         }
     </script>
