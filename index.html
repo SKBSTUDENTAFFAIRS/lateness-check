@@ -162,11 +162,11 @@
             animation: skbFadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* รายงาน A4: ใช้พื้นที่ 80% ตรงกลาง และไม่พึ่งลำดับ div ที่เปลี่ยนง่าย */
+        /* รายงาน A4 แนวนอน: พื้นที่เนื้อหา 90% พร้อมขอบปลอดภัยสำหรับการพิมพ์ */
         @media print {
             @page {
-                size: A4 portrait;
-                margin: 1.2cm;
+                size: A4 landscape;
+                margin: 1.1cm;
             }
             body {
                 background: white !important;
@@ -180,7 +180,7 @@
                 /* ฟอนต์เอกสารราชการไทย: ถ้าเครื่อง/เครื่องพิมพ์มี TH Sarabun New หรือ TH SarabunPSK ติดตั้งไว้ (ปกติมีอยู่แล้วในคอมพิวเตอร์ราชการ/โรงเรียนไทยส่วนใหญ่ที่ลง Microsoft Office) จะใช้ฟอนต์นั้นเป๊ะๆ ถ้าไม่มีจะ fallback ไปที่ Sarabun (Google Font ที่ใกล้เคียงที่สุด) */
                 font-family: 'TH Sarabun New', 'TH SarabunPSK', 'Sarabun', sans-serif !important;
             }
-            header, nav, footer, #sec-login-gate, #connection-status-badge, #sec-tab-record, #toast-notification, #confirm-modal, #logs-manager-modal {
+            header, nav, footer, #sec-login-gate, #connection-status-badge, #sec-tab-record, #toast-notification, #confirm-modal, #logs-manager-modal, #risk-group-modal {
                 display: none !important;
             }
             main {
@@ -193,12 +193,12 @@
                 display: block !important;
                 width: 100% !important;
             }
-            .dashboard-controls, .dashboard-kpis, .dashboard-charts, .report-screen-toolbar {
+            .dashboard-controls, .dashboard-kpis, .dashboard-insights, .dashboard-charts, .report-screen-toolbar {
                 display: none !important;
             }
             #print-report-shell {
                 display: block !important;
-                width: 80% !important;
+                width: 90% !important;
                 margin: 0 auto !important;
                 box-shadow: none !important;
                 border: 0 !important;
@@ -210,8 +210,8 @@
                 margin: 0 0 5mm !important;
                 color: black !important;
             }
-            #print-only-header h2 { font-size: 18pt !important; line-height: 1.25 !important; }
-            #print-only-header p { font-size: 11pt !important; line-height: 1.35 !important; }
+            #print-only-header h2 { font-size: 20pt !important; line-height: 1.25 !important; }
+            #print-only-header p { font-size: 18pt !important; line-height: 1.35 !important; }
             #print-report-summary {
                 display: grid !important;
                 grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -229,8 +229,8 @@
                 text-align: center !important;
                 break-inside: avoid !important;
             }
-            .print-summary-label { display: block !important; font-size: 8.5pt !important; color: #475569 !important; }
-            .print-summary-value { display: block !important; margin-top: 1mm !important; font-size: 12pt !important; font-weight: 700 !important; color: #0f172a !important; }
+            .print-summary-label { display: block !important; font-size: 16pt !important; color: #475569 !important; }
+            .print-summary-value { display: block !important; margin-top: 1mm !important; font-size: 18pt !important; font-weight: 700 !important; color: #0f172a !important; }
             .overflow-x-auto {
                 overflow: visible !important;
             }
@@ -251,7 +251,7 @@
                 word-wrap: break-word;
                 overflow-wrap: break-word;
                 vertical-align: middle !important;
-                font-size: 9.5pt !important;
+                font-size: 16pt !important;
                 line-height: 1.25 !important;
                 padding: 2.5mm 2mm !important;
             }
@@ -273,6 +273,41 @@
                 break-inside: avoid;
                 page-break-inside: avoid;
             }
+            /* รายงานย่อยจากการ์ดและกราฟ: พิมพ์เฉพาะเนื้อหาที่กำลังเปิด */
+            body.print-risk-report > *:not(#risk-group-modal),
+            body.print-chart-report > *:not(#chart-detail-modal),
+            body.print-student-report > *:not(#logs-manager-modal) { display: none !important; }
+            body.print-risk-report #risk-group-modal,
+            body.print-chart-report #chart-detail-modal,
+            body.print-student-report #logs-manager-modal {
+                display: block !important;
+                position: static !important;
+                background: white !important;
+                padding: 0 !important;
+                color: black !important;
+            }
+            body.print-risk-report #risk-group-modal > div,
+            body.print-chart-report #chart-detail-modal > div,
+            body.print-student-report #logs-manager-modal > div {
+                max-width: 90% !important;
+                width: 90% !important;
+                max-height: none !important;
+                margin: 0 auto !important;
+                border: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+            .print-modal-header { background: white !important; color: black !important; padding: 0 0 5mm !important; border-bottom: 0.35mm solid #64748b !important; }
+            .print-modal-title { font-size: 20pt !important; line-height: 1.25 !important; color: black !important; }
+            .print-modal-subtitle { font-size: 18pt !important; line-height: 1.3 !important; color: #334155 !important; }
+            .print-modal-table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
+            .print-modal-table th, .print-modal-table td { border: 0.25mm solid #64748b !important; padding: 2.5mm 2mm !important; font-size: 16pt !important; line-height: 1.25 !important; vertical-align: middle !important; color: black !important; }
+            .print-modal-table th { background: #e2e8f0 !important; text-align: center !important; }
+            .print-modal-table thead { display: table-header-group !important; }
+            .print-modal-table tr { break-inside: avoid; page-break-inside: avoid; }
+            .print-hide { display: none !important; }
+            .print-chart-bars { height: 85mm !important; border-bottom: 0.35mm solid #64748b !important; }
+            .print-chart-bars .chart-value { font-size: 16pt !important; }
         }
     </style>
 </head>
@@ -491,52 +526,61 @@
 
                 <!-- KPI Metric Performance Overviews -->
                 <div class="dashboard-kpis grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in" style="animation-delay:0.05s">
+                    <button onclick="openRiskGroupModal('all')" class="text-left bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in hover:border-emerald-300 transition-colors" style="animation-delay:0.05s">
                         <div class="space-y-1">
-                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider" id="kpi-total-label">มาสายในช่วงที่เลือก</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider" id="kpi-total-label">จำนวนครั้งที่มาสาย</span>
                             <h3 class="text-3xl font-extrabold text-slate-900" id="kpi-total-weeks">0</h3>
-                            <p class="text-[10px] text-slate-400 font-medium">รายการมาสายสะสมทั้งหมด</p>
+                            <p class="text-[10px] text-slate-400 font-medium">คลิกเพื่อดูรายชื่อนักเรียนที่มาสาย</p>
                         </div>
                         <div class="bg-slate-50 text-slate-700 p-4 rounded-2xl">
                             <i class="fa-solid fa-user-group text-xl"></i>
                         </div>
-                    </div>
+                    </button>
 
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in" style="animation-delay:0.12s">
+                    <button onclick="openRiskGroupModal('high')" class="text-left bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in hover:border-rose-300 transition-colors" style="animation-delay:0.12s">
                         <div class="space-y-1">
-                            <span class="text-xs font-bold text-rose-500 uppercase tracking-wider">กลุ่มเสี่ยงสูง (High Risk)</span>
+                            <span class="text-xs font-bold text-rose-500 uppercase tracking-wider">นักเรียนกลุ่มเสี่ยงสูง</span>
                             <h3 class="text-3xl font-extrabold text-rose-600" id="kpi-high-risk">0</h3>
-                            <p class="text-[10px] text-rose-500/80 font-bold bg-rose-50 px-2 py-0.5 rounded inline-block">สายติดต่อกัน 3 วันขึ้นไป</p>
+                            <p class="text-[10px] text-rose-500/80 font-bold bg-rose-50 px-2 py-0.5 rounded inline-block" id="kpi-high-rule">คลิกเพื่อดูรายชื่อ</p>
                         </div>
                         <div class="bg-rose-50 text-rose-600 p-4 rounded-2xl">
                             <i class="fa-solid fa-triangle-exclamation text-xl"></i>
                         </div>
-                    </div>
+                    </button>
 
-                    <div class="bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in" style="animation-delay:0.19s">
+                    <button onclick="openRiskGroupModal('medium')" class="text-left bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex items-center justify-between skb-card-lift skb-anim-in hover:border-amber-300 transition-colors" style="animation-delay:0.19s">
                         <div class="space-y-1">
-                            <span class="text-xs font-bold text-amber-500 uppercase tracking-wider">กลุ่มเสี่ยงกลาง (Medium Risk)</span>
+                            <span class="text-xs font-bold text-amber-500 uppercase tracking-wider">นักเรียนกลุ่มเสี่ยงปานกลาง</span>
                             <h3 class="text-3xl font-extrabold text-amber-600" id="kpi-mid-risk">0</h3>
-                            <p class="text-[10px] text-amber-500/80 font-bold bg-amber-50 px-2 py-0.5 rounded inline-block">สถิติมาสายเกิน 40%</p>
+                            <p class="text-[10px] text-amber-500/80 font-bold bg-amber-50 px-2 py-0.5 rounded inline-block" id="kpi-mid-rule">คลิกเพื่อดูรายชื่อ</p>
                         </div>
                         <div class="bg-amber-50 text-amber-600 p-4 rounded-2xl">
                             <i class="fa-solid fa-chart-pie text-xl"></i>
                         </div>
-                    </div>
+                    </button>
                 </div>
+
+                <section class="dashboard-insights bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/60 shadow-sm">
+                    <div class="flex flex-col sm:flex-row justify-between gap-2 mb-4">
+                        <div><h3 class="text-sm font-bold text-slate-900"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>บทวิเคราะห์จากข้อมูลที่บันทึก</h3><p class="text-xs text-slate-400 mt-1">สรุปจากรายการมาสายในช่วงเวลาที่เลือก</p></div>
+                        <span id="insight-period-label" class="text-[11px] font-semibold text-slate-500"></span>
+                    </div>
+                    <div id="insight-cards" class="grid grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                </section>
 
                 <!-- Graphs Section Layout -->
                 <div class="dashboard-charts grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm skb-card-lift skb-anim-in" style="animation-delay:0.26s">
+                    <div onclick="openChartDetail('weekday')" role="button" tabindex="0" class="cursor-pointer bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm skb-card-lift skb-anim-in hover:border-emerald-300" style="animation-delay:0.26s">
                         <h4 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <i class="fa-solid fa-chart-bar text-emerald-600"></i>
                             <span>การกระจายสถิติการมาสายตามวันเรียน</span>
                         </h4>
                         <!-- Dynamic bar displays -->
                         <div class="h-48 flex items-end justify-between px-2 pb-2 border-b border-slate-100" id="chart-bar-holder"></div>
+                        <p class="mt-3 text-[11px] font-bold text-emerald-700"><i class="fa-solid fa-up-right-from-square mr-1"></i>คลิกเพื่อดูข้อมูลต้นทางและพิมพ์</p>
                     </div>
 
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between skb-card-lift skb-anim-in" style="animation-delay:0.32s">
+                    <div onclick="openChartDetail('reason')" role="button" tabindex="0" class="cursor-pointer bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col justify-between skb-card-lift skb-anim-in hover:border-emerald-300" style="animation-delay:0.32s">
                         <h4 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                             <i class="fa-solid fa-chart-pie text-emerald-600"></i>
                             <span>วิเคราะห์สัดส่วนสาเหตุการมาสายในช่วงที่เลือก</span>
@@ -547,6 +591,7 @@
                             </div>
                             <ul id="reasons-legend-list" class="text-[11px] space-y-1.5 text-slate-600"></ul>
                         </div>
+                        <p class="mt-3 text-[11px] font-bold text-emerald-700"><i class="fa-solid fa-up-right-from-square mr-1"></i>คลิกเพื่อดูข้อมูลต้นทางและพิมพ์</p>
                     </div>
                 </div>
 
@@ -588,7 +633,7 @@
                                     <th class="px-5 py-3">รหัสประจำตัว</th>
                                     <th class="px-5 py-3">ชื่อ-นามสกุล</th>
                                     <th class="px-5 py-3">ระดับชั้น / เลขที่</th>
-                                    <th class="px-5 py-3 text-center">มาสายในช่วงที่เลือก</th>
+                                    <th class="px-5 py-3 text-center">จำนวนครั้งที่มาสาย</th>
                                     <th class="px-5 py-3">สถานะความประพฤติ</th>
                                     <th class="px-5 py-3 text-center">สิทธิ์จัดการประวัติ</th>
                                 </tr>
@@ -609,29 +654,61 @@
         </footer>
     </div>
 
+    <!-- Modal รายชื่อนักเรียนตามกลุ่มสถิติ -->
+    <div id="risk-group-modal" class="fixed inset-0 z-[97] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-100 overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="print-modal-header p-5 sm:p-6 bg-slate-900 text-white flex justify-between items-start gap-3">
+                <div><h3 class="print-modal-title text-base font-bold" id="risk-group-title">รายชื่อนักเรียน</h3><p class="print-modal-subtitle text-xs text-slate-400 mt-1" id="risk-group-description"></p></div>
+                <div class="print-hide flex gap-3"><button onclick="printRiskGroupReport()" class="text-white font-bold text-xs"><i class="fa-solid fa-print mr-1"></i>พิมพ์</button><button onclick="closeRiskGroupModal()" class="text-slate-400 hover:text-white transition-colors shrink-0" aria-label="ปิด"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+            </div>
+            <div class="p-5 sm:p-6 overflow-y-auto">
+                <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+                    <table class="print-modal-table w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100"><tr><th class="px-4 py-3 text-center">อันดับ</th><th class="px-4 py-3">ชื่อ-นามสกุล</th><th class="px-4 py-3">ชั้น / เลขที่</th><th class="px-4 py-3">สาเหตุที่บันทึก</th><th class="px-4 py-3 text-center">จำนวนครั้ง</th><th class="px-4 py-3 text-center">จำนวนวัน</th><th class="px-4 py-3 text-center print-hide">รายละเอียด</th></tr></thead>
+                        <tbody id="risk-group-table-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal รายละเอียดกราฟและตารางข้อมูลต้นทาง -->
+    <div id="chart-detail-modal" class="fixed inset-0 z-[96] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl max-w-5xl w-full shadow-2xl border border-slate-100 overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="print-modal-header p-5 sm:p-6 bg-slate-900 text-white flex justify-between items-start gap-3">
+                <div><h3 class="print-modal-title text-base font-bold" id="chart-detail-title">รายละเอียดกราฟ</h3><p class="print-modal-subtitle text-xs text-slate-400 mt-1" id="chart-detail-description"></p></div>
+                <div class="print-hide flex gap-3"><button onclick="printChartReport()" class="text-white font-bold text-xs"><i class="fa-solid fa-print mr-1"></i>พิมพ์</button><button onclick="closeChartDetail()" class="text-slate-400 hover:text-white transition-colors shrink-0"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+            </div>
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-6">
+                <div id="chart-detail-bars" class="print-chart-bars h-56 flex items-end justify-around gap-3 px-3 pb-2 border-b border-slate-200"></div>
+                <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+                    <table class="print-modal-table w-full text-left text-xs"><thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100"><tr><th id="chart-detail-col-title" class="px-4 py-3">รายการ</th><th class="px-4 py-3 text-center">จำนวนครั้ง</th><th class="px-4 py-3 text-center">สัดส่วน</th><th class="px-4 py-3">ที่มาของข้อมูล</th></tr></thead><tbody id="chart-detail-table-body" class="divide-y divide-slate-100"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Detailed Logs & Deletion Manager Modal (Admin Authority) -->
     <div id="logs-manager-modal" class="fixed inset-0 z-[98] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden transition-all duration-200">
         <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-200 max-h-[85vh] flex flex-col">
-            <div class="p-5 sm:p-6 bg-slate-900 text-white flex justify-between items-start gap-3">
+            <div class="print-modal-header p-5 sm:p-6 bg-slate-900 text-white flex justify-between items-start gap-3">
                 <div class="min-w-0">
-                    <h3 class="text-sm sm:text-base font-bold break-words" id="mgr-modal-student-name">สมศักดิ์ รักดี</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">จัดการประวัติและรายละเอียดสถิติตามสิทธิ์ของแอดมินฝ่ายปกครอง</p>
+                    <h3 class="print-modal-title text-sm sm:text-base font-bold break-words" id="mgr-modal-student-name">สมศักดิ์ รักดี</h3>
+                    <p class="print-modal-subtitle text-xs text-slate-400 mt-0.5">จัดการประวัติและรายละเอียดสถิติตามสิทธิ์ของแอดมินฝ่ายปกครอง</p>
                 </div>
-                <button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors shrink-0">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <div class="print-hide flex gap-3"><button onclick="printStudentLogReport()" class="text-white font-bold text-xs"><i class="fa-solid fa-print mr-1"></i>พิมพ์</button><button onclick="closeLogsManagerModal()" class="text-slate-400 hover:text-white transition-colors shrink-0"><i class="fa-solid fa-xmark text-lg"></i></button></div>
             </div>
             
             <!-- Table listing specific student logs with deletion options -->
             <div class="p-6 overflow-y-auto flex-grow space-y-4">
                 <div class="overflow-hidden border border-slate-100 rounded-2xl">
-                    <table class="w-full text-left text-xs">
+                    <table class="print-modal-table w-full text-left text-xs">
                         <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
                             <tr>
                                 <th class="px-4 py-2.5">วันที่บันทึก (Timestamp)</th>
                                 <th class="px-4 py-2.5">สาเหตุการมาสาย</th>
                                 <th class="px-4 py-2.5">หมายเหตุ</th>
-                                <th class="px-4 py-2.5 text-center">สิทธิ์ปกครอง</th>
+                                <th class="px-4 py-2.5 text-center print-hide">สิทธิ์ปกครอง</th>
                             </tr>
                         </thead>
                         <tbody id="mgr-modal-logs-body" class="divide-y divide-slate-100">
@@ -652,6 +729,9 @@
         let selectedStudents = [];
         let activePortalTab = "record";
         let deletionTargetId = null;
+        let dashboardResults = [];
+        let dashboardRangeLogs = [];
+        let dashboardMeta = { periodText: '', schoolDays: 0, highThreshold: 0, mediumThreshold: 0 };
 
         // ON LOAD INITIALIZATION
         window.onload = function() {
@@ -1086,7 +1166,8 @@
             const periodText = startStr === endStr ? startStr : `${startStr} ถึง ${endStr}`;
             document.getElementById('print-date-subtitle').textContent = `ข้อมูลระหว่างวันที่ ${periodText}`;
             document.getElementById('print-summary-period').textContent = periodText;
-            document.getElementById('kpi-total-label').textContent = 'มาสายในช่วงที่เลือก';
+            document.getElementById('kpi-total-label').textContent = 'จำนวนครั้งที่มาสาย';
+            document.getElementById('insight-period-label').textContent = `ช่วงเวลา: ${periodText}`;
 
             let rangeLogs = loadedLogs.filter(item => {
                 const itemDate = new Date(item.timestamp);
@@ -1103,7 +1184,15 @@
             }
 
             animateCounterTo('kpi-total-weeks', rangeLogs.length);
+            dashboardRangeLogs = rangeLogs;
             document.getElementById('print-summary-total').textContent = `${rangeLogs.length} รายการ`;
+            const schoolDays = countSchoolDays(start, end);
+            // เกณฑ์ปรับตามระยะเวลาที่เลือก: สั้นก็ยังพบความเสี่ยงได้, ยาวก็ไม่เข้มเกินไป
+            const highThreshold = Math.max(3, Math.ceil(schoolDays * 0.15));
+            const mediumThreshold = Math.max(2, Math.ceil(schoolDays * 0.05));
+            dashboardMeta = { periodText, schoolDays, highThreshold, mediumThreshold, start, end };
+            document.getElementById('kpi-high-rule').textContent = `ตั้งแต่ ${highThreshold} วัน หรือสาย 3 วันเรียนติด`;
+            document.getElementById('kpi-mid-rule').textContent = `${mediumThreshold}–${highThreshold - 1} วันในช่วงที่เลือก`;
 
             // สร้างโครงสร้างสถิติของนักเรียนที่มาสาย
             const studentStatsMap = {};
@@ -1111,6 +1200,7 @@
                 studentStatsMap[st.id] = {
                     student: st,
                     timestamps: [],
+                    logs: [],
                     reasons: {},
                     riskValue: 0
                 };
@@ -1122,6 +1212,7 @@
                     if (!studentStatsMap[log.id].timestamps.includes(dStr)) {
                         studentStatsMap[log.id].timestamps.push(dStr);
                     }
+                    studentStatsMap[log.id].logs.push(log);
                     studentStatsMap[log.id].reasons[log.reason] = (studentStatsMap[log.id].reasons[log.reason] || 0) + 1;
                 }
             });
@@ -1136,23 +1227,26 @@
                 const daysLateCount = entry.timestamps.length;
                 if (daysLateCount === 0) return;
 
-                const percentValue = Math.round((daysLateCount / countSchoolDays(start, end)) * 100);
+                const percentValue = Math.round((daysLateCount / schoolDays) * 100);
                 entry.percent = percentValue;
 
                 // Checking consecutive sequences
                 const hasConsecutive = verifyConsecutivePatterns(entry.timestamps);
 
-                if (hasConsecutive) {
+                if (hasConsecutive || daysLateCount >= highThreshold) {
                     entry.statusText = "สายสะสมต่อเนื่อง (High Risk)";
                     entry.colorStyles = "text-rose-600 bg-rose-50 border-rose-200";
+                    entry.riskLevel = 'high';
                     totalHighRisks++;
-                } else if (percentValue >= 40) {
-                    entry.statusText = "สายเป็นระยะ (Medium Risk)";
+                } else if (daysLateCount >= mediumThreshold) {
+                    entry.statusText = "ควรเฝ้าระวัง (Medium Risk)";
                     entry.colorStyles = "text-amber-600 bg-amber-50 border-amber-200";
+                    entry.riskLevel = 'medium';
                     totalMidRisks++;
                 } else {
                     entry.statusText = "สายปกติทั่วไป (Normal)";
                     entry.colorStyles = "text-slate-500 bg-slate-100 border-slate-200";
+                    entry.riskLevel = 'normal';
                 }
 
                 computedResults.push(entry);
@@ -1164,6 +1258,7 @@
 
             // Order by most occurrences descending
             computedResults.sort((a, b) => b.timestamps.length - a.timestamps.length);
+            dashboardResults = computedResults;
 
             // Render output
             const tbody = document.getElementById('tbl-leaderboard-body');
@@ -1184,8 +1279,8 @@
                         <td class="px-5 py-4 font-bold text-slate-800">${item.student.name}</td>
                         <td class="px-5 py-4 text-slate-600">${item.student.room} | เลขที่ ${item.student.seatNo}</td>
                         <td class="px-5 py-4 text-center">
-                            <span class="inline-block w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold leading-7 text-xs">${item.timestamps.length}</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">${item.percent}% ของวันเรียน</span>
+                            <span class="inline-block w-7 h-7 rounded-full bg-slate-100 text-slate-800 font-bold leading-7 text-xs">${item.logs.length}</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">${item.timestamps.length} วัน · ${item.percent}% ของวันเรียน</span>
                         </td>
                         <td class="px-5 py-4">
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${item.colorStyles}">
@@ -1203,26 +1298,121 @@
             }
 
             document.getElementById('print-summary-students').textContent = `${computedResults.length} คน`;
+            renderDashboardInsights(rangeLogs, computedResults, start, end);
             renderBarChartDistributions(rangeLogs);
             renderReasonsPieSectors(rangeLogs);
         }
 
-        // Check if 3 or more consecutive weekdays
+        // ตรวจวันเรียนติดกันจริงตามปฏิทิน ไม่ใช่เพียงวันในสัปดาห์เดียวกันคนละสัปดาห์
         function verifyConsecutivePatterns(dateStrings) {
-            const map = [false, false, false, false, false];
-            dateStrings.forEach(str => {
-                const day = new Date(str).getDay();
-                if (day >= 1 && day <= 5) {
-                    map[day - 1] = true;
-                }
-            });
-
-            for (let i = 0; i <= 2; i++) {
-                if (map[i] && map[i+1] && map[i+2]) {
-                    return true;
-                }
+            const dates = [...new Set(dateStrings)].map(value => new Date(value)).filter(date => !isNaN(date)).sort((a, b) => a - b);
+            let consecutiveDays = 1;
+            for (let i = 1; i < dates.length; i++) {
+                const previous = new Date(dates[i - 1]);
+                previous.setHours(0, 0, 0, 0);
+                const current = new Date(dates[i]);
+                current.setHours(0, 0, 0, 0);
+                let expected = new Date(previous);
+                expected.setDate(expected.getDate() + 1);
+                if (expected.getDay() === 6) expected.setDate(expected.getDate() + 2);
+                if (expected.getDay() === 0) expected.setDate(expected.getDate() + 1);
+                consecutiveDays = current.getTime() === expected.getTime() ? consecutiveDays + 1 : 1;
+                if (consecutiveDays >= 3) return true;
             }
             return false;
+        }
+
+        function renderDashboardInsights(rangeLogs, results, start, end) {
+            const entries = rangeLogs.length;
+            const affected = results.length;
+            const repeatStudents = results.filter(item => item.timestamps.length >= 2).length;
+            const affectedRate = loadedStudents.length ? Math.round((affected / loadedStudents.length) * 100) : 0;
+            const average = affected ? (entries / affected).toFixed(1) : '0';
+            const countBy = (items, valueFn) => items.reduce((map, item) => {
+                const key = valueFn(item) || 'ไม่ระบุ'; map[key] = (map[key] || 0) + 1; return map;
+            }, {});
+            const topItem = map => Object.entries(map).sort((a, b) => b[1] - a[1])[0] || ['ไม่มีข้อมูล', 0];
+            const [topReason, topReasonCount] = topItem(countBy(rangeLogs, item => item.reason));
+            const [topRoom, topRoomCount] = topItem(countBy(rangeLogs, item => item.room));
+            const weekdayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            const [topWeekday, topWeekdayCount] = topItem(countBy(rangeLogs, item => weekdayNames[new Date(item.timestamp).getDay()]));
+            const dateMap = countBy(rangeLogs, item => dateToInput(new Date(item.timestamp)));
+            const [topDate, topDateCount] = topItem(dateMap);
+            const topDateLabel = topDate === 'ไม่มีข้อมูล' ? topDate : dateFromInput(topDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            const cards = [
+                ['นักเรียนที่มาสาย', `${affected} คน`, `${affectedRate}% ของนักเรียนทั้งหมด`],
+                ['เฉลี่ยต่อคน', `${average} ครั้ง`, 'เฉพาะนักเรียนที่มีบันทึกมาสาย'],
+                ['มาสายซ้ำ', `${repeatStudents} คน`, 'ตั้งแต่ 2 วันขึ้นไปในช่วงที่เลือก'],
+                ['สาเหตุที่พบบ่อยที่สุด', topReason, `${topReasonCount} ครั้ง`],
+                ['ชั้น/ห้องที่มีรายการมากสุด', topRoom, `${topRoomCount} ครั้ง`],
+                ['วันในสัปดาห์ที่พบบ่อย', topWeekday, `${topWeekdayCount} ครั้ง`],
+                ['วันที่มีรายการมากสุด', topDateLabel, `${topDateCount} ครั้ง`],
+                ['วันเรียนในช่วงนี้', `${dashboardMeta.schoolDays} วัน`, 'ใช้คำนวณเกณฑ์ความเสี่ยง']
+            ];
+            document.getElementById('insight-cards').innerHTML = cards.map(([label, value, caption]) => `
+                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3 min-w-0"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${label}</p><p class="mt-1 text-sm font-bold text-slate-800 truncate" title="${value}">${value}</p><p class="mt-0.5 text-[10px] text-slate-500 truncate" title="${caption}">${caption}</p></div>`).join('');
+        }
+
+        function openRiskGroupModal(group) {
+            const details = {
+                all: ['รายชื่อนักเรียนที่มาสาย', `นักเรียน ${dashboardResults.length} คน จากข้อมูลช่วง ${dashboardMeta.periodText}`, dashboardResults],
+                high: ['รายชื่อนักเรียนกลุ่มเสี่ยงสูง', `ตั้งแต่ ${dashboardMeta.highThreshold} วัน หรือมาสาย 3 วันเรียนติดต่อกัน`, dashboardResults.filter(item => item.riskLevel === 'high')],
+                medium: ['รายชื่อนักเรียนกลุ่มเสี่ยงปานกลาง', `มาสาย ${dashboardMeta.mediumThreshold}–${dashboardMeta.highThreshold - 1} วันในช่วงที่เลือก`, dashboardResults.filter(item => item.riskLevel === 'medium')]
+            };
+            const [title, description, students] = details[group];
+            document.getElementById('risk-group-title').textContent = title;
+            document.getElementById('risk-group-description').textContent = description;
+            const tbody = document.getElementById('risk-group-table-body');
+            tbody.innerHTML = students.length ? students.map((item, index) => {
+                const reasons = Object.entries(item.reasons).sort((a, b) => b[1] - a[1]).map(([reason, count]) => `${reason} (${count})`).join(', ');
+                return `<tr><td class="px-4 py-3 text-center font-bold text-slate-500">${index + 1}</td><td class="px-4 py-3"><p class="font-bold text-slate-800">${item.student.name}</p><p class="text-[10px] text-slate-400">${item.student.id}</p></td><td class="px-4 py-3 text-slate-600">${item.student.room} / ${item.student.seatNo}</td><td class="px-4 py-3 text-slate-600">${reasons || '-'}</td><td class="px-4 py-3 text-center font-bold">${item.logs.length}</td><td class="px-4 py-3 text-center">${item.timestamps.length}</td><td class="print-hide px-4 py-3 text-center"><button onclick="closeRiskGroupModal(); openLogsManagerModal('${item.student.id}', true)" class="text-emerald-700 font-bold hover:underline">ดูในช่วงนี้</button></td></tr>`;
+            }).join('') : '<tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">ไม่พบนักเรียนในกลุ่มนี้ตามเกณฑ์ของช่วงเวลาที่เลือก</td></tr>';
+            document.getElementById('risk-group-modal').classList.remove('hidden');
+        }
+
+        function closeRiskGroupModal() {
+            document.getElementById('risk-group-modal').classList.add('hidden');
+        }
+
+        function openChartDetail(type) {
+            const weekdayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            let title, description, source, rows;
+            if (type === 'weekday') {
+                const counts = weekdayNames.slice(1, 6).reduce((map, name) => ({ ...map, [name]: 0 }), {});
+                dashboardRangeLogs.forEach(log => {
+                    const day = new Date(log.timestamp).getDay();
+                    if (day >= 1 && day <= 5) counts[weekdayNames[day]]++;
+                });
+                title = 'รายละเอียดกราฟการมาสายตามวันเรียน';
+                description = `ช่วงข้อมูล ${dashboardMeta.periodText}`;
+                source = 'คำนวณจากวันที่/เวลา (Timestamp) ในตาราง LateLogs';
+                rows = Object.entries(counts);
+            } else {
+                const counts = dashboardRangeLogs.reduce((map, log) => {
+                    const reason = log.reason || 'ไม่ระบุสาเหตุ';
+                    map[reason] = (map[reason] || 0) + 1;
+                    return map;
+                }, {});
+                title = 'รายละเอียดกราฟสาเหตุการมาสาย';
+                description = `ช่วงข้อมูล ${dashboardMeta.periodText} — เช่น ตื่นสาย, ภารกิจอื่น ๆ หรือเหตุผลที่บันทึกไว้`;
+                source = 'คำนวณจากคอลัมน์ “เหตุผล” ในตาราง LateLogs';
+                rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            }
+            const total = dashboardRangeLogs.length;
+            const max = Math.max(...rows.map(([, count]) => count), 1);
+            const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#8b5cf6'];
+            document.getElementById('chart-detail-title').textContent = title;
+            document.getElementById('chart-detail-description').textContent = description;
+            document.getElementById('chart-detail-col-title').textContent = type === 'weekday' ? 'วันเรียน' : 'สาเหตุการมาสาย';
+            document.getElementById('chart-detail-bars').innerHTML = rows.map(([label, count], index) => `
+                <div class="flex-1 h-full flex flex-col justify-end items-center min-w-0"><span class="chart-value text-xs font-bold text-slate-700 mb-1">${count}</span><div class="w-full max-w-14 rounded-t-lg" style="height:${Math.max((count / max) * 78, 3)}%;background:${colors[index % colors.length]}"></div><span class="mt-2 text-[10px] text-center text-slate-600 break-words">${label}</span></div>`).join('');
+            document.getElementById('chart-detail-table-body').innerHTML = rows.length ? rows.map(([label, count]) => `
+                <tr><td class="px-4 py-3 font-semibold text-slate-700">${label}</td><td class="px-4 py-3 text-center font-bold">${count}</td><td class="px-4 py-3 text-center">${total ? Math.round((count / total) * 100) : 0}%</td><td class="px-4 py-3 text-slate-500">${source}</td></tr>`).join('') : '<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">ยังไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>';
+            document.getElementById('chart-detail-modal').classList.remove('hidden');
+        }
+
+        function closeChartDetail() {
+            document.getElementById('chart-detail-modal').classList.add('hidden');
         }
 
         // DYNAMIC NATIVE GRAPHS BUILDERS
@@ -1297,14 +1487,18 @@
         }
 
         // ADMIN AUTHORIZED LOGS MANAGER & DELETIONS
-        function openLogsManagerModal(studentId) {
+        function openLogsManagerModal(studentId, selectedRangeOnly = false) {
             const stObj = loadedStudents.find(s => String(s.id) === String(studentId));
             if (!stObj) return;
 
             document.getElementById('mgr-modal-student-name').textContent = `${stObj.name} (ห้อง ${stObj.room} เลขที่ ${stObj.seatNo})`;
             
-            // กรองสถิติบันทึกทั้งหมดของนักเรียนคนนี้ เรียงลำดับจากล่าสุดขึ้นก่อน
-            const logs = loadedLogs.filter(l => String(l.id) === String(studentId)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+            // เลือกได้ทั้งประวัติทั้งหมด หรือเฉพาะช่วงเวลาที่เปิดจากกลุ่มเสี่ยง
+            const logs = loadedLogs.filter(l => {
+                if (String(l.id) !== String(studentId)) return false;
+                const timestamp = new Date(l.timestamp);
+                return !selectedRangeOnly || (timestamp >= dashboardMeta.start && timestamp <= dashboardMeta.end);
+            }).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             const tbody = document.getElementById('mgr-modal-logs-body');
             if (logs.length === 0) {
@@ -1319,7 +1513,7 @@
                             <td class="px-4 py-3 font-mono text-[11px] font-bold text-slate-800">${formattedDate}</td>
                             <td class="px-4 py-3 text-slate-600 font-semibold">${log.reason}</td>
                             <td class="px-4 py-3 text-slate-400 font-medium">${log.notes || "-"}</td>
-                            <td class="px-4 py-3 text-center">
+                            <td class="print-hide px-4 py-3 text-center">
                                 <button onclick="triggerLogDeletion('${log.logId}')" class="text-rose-500 hover:text-rose-700 font-bold px-2.5 py-1 rounded-lg hover:bg-rose-50 transition-colors inline-flex items-center space-x-1">
                                     <i class="fa-regular fa-trash-can"></i>
                                     <span>ลบข้อมูล</span>
@@ -1388,22 +1582,31 @@
             deletionTargetId = null;
         };
 
-        // EXPORT TO PDF PRINTER (พร้อมระบบปรับขนาดตัวอักษรอัตโนมัติตามจำนวนแถว)
-        function handlePrintExport() {
-            const tbody = document.getElementById('tbl-leaderboard-body');
-            const rowCount = tbody ? tbody.querySelectorAll('tr').length : 0;
-
-            document.body.classList.remove('print-density-compact', 'print-density-tight', 'print-density-ultra');
-            if (rowCount > 40) {
-                document.body.classList.add('print-density-ultra');
-            } else if (rowCount > 25) {
-                document.body.classList.add('print-density-tight');
-            } else if (rowCount > 15) {
-                document.body.classList.add('print-density-compact');
-            }
-            // ไม่เกิน 15 แถว: ไม่ต้องเติมคลาสใด ๆ ใช้ขนาดปกติ (13pt) ตามที่กำหนดไว้ใน @media print
-
+        function printWithMode(mode) {
+            document.body.classList.remove('print-risk-report', 'print-chart-report', 'print-student-report');
+            if (mode) document.body.classList.add(mode);
             window.print();
+        }
+
+        window.addEventListener('afterprint', () => {
+            document.body.classList.remove('print-risk-report', 'print-chart-report', 'print-student-report');
+        });
+
+        function printRiskGroupReport() {
+            printWithMode('print-risk-report');
+        }
+
+        function printChartReport() {
+            printWithMode('print-chart-report');
+        }
+
+        function printStudentLogReport() {
+            printWithMode('print-student-report');
+        }
+
+        // EXPORT TO PDF PRINTER
+        function handlePrintExport() {
+            printWithMode();
         }
     </script>
 </body>
